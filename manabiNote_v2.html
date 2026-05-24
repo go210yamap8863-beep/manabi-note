@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="まなびノート">
+<title>まなびノート</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Zen Maru Gothic','Hiragino Maru Gothic Pro',sans-serif;background:#fff8f5;min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:90px;}
+/* Header */
+.hdr{background:linear-gradient(135deg,#ff6b9d,#ff8c61);padding:22px 18px 16px;position:relative;overflow:hidden;}
+.hdr::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.1);}
+.hdr-row{display:flex;align-items:center;gap:10px;}
+.hdr-char{font-size:30px;}
+.hdr-info{flex:1;}
+.hdr-title{color:white;font-weight:700;font-size:17px;}
+.hdr-sub{color:rgba(255,255,255,.85);font-size:11px;margin-top:2px;}
+.hdr-gear{background:rgba(255,255,255,.2);border:none;border-radius:12px;padding:6px 10px;color:white;font-size:18px;cursor:pointer;}
+.streak-bar{display:flex;gap:4px;margin-top:10px;}
+.streak-dot{flex:1;height:6px;border-radius:4px;}
+/* Bottom nav */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid #f0e0ff;padding:8px 6px env(safe-area-inset-bottom,16px);display:flex;gap:4px;z-index:100;}
+.nav-btn{flex:1;padding:9px 3px;border:none;border-radius:14px;font-weight:700;font-size:10px;cursor:pointer;font-family:inherit;transition:all .2s;background:#f9f9f9;color:#bbb;}
+.nav-btn.active{background:linear-gradient(135deg,#ff8c61,#ff6b9d);color:white;box-shadow:0 3px 10px rgba(255,107,157,.35);}
+.nav-icon{font-size:16px;}
+/* Content */
+.content{padding:14px 14px 0;}
+/* Cards */
+.card{background:white;border-radius:20px;padding:18px;box-shadow:0 3px 14px rgba(0,0,0,.07);margin-bottom:14px;}
+/* Pills */
+.pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:7px 12px;border-radius:20px;border:2px solid #eee;font-weight:700;font-size:12px;cursor:pointer;background:white;color:#bbb;font-family:inherit;transition:all .15s;}
+/* Inputs */
+.inp{width:100%;border:2px solid #f0e0ff;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;color:#555;background:white;}
+textarea.inp{resize:none;line-height:1.6;}
+select.inp{appearance:none;background:white url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M0 0l6 8 6-8z' fill='%23ccc'/></svg>") no-repeat right 12px center;}
+/* Buttons */
+.btn-pink{width:100%;padding:14px;background:linear-gradient(135deg,#ff8c61,#ff6b9d);color:white;border:none;border-radius:16px;font-weight:700;font-size:16px;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(255,107,157,.35);}
+.btn-blue{width:100%;padding:12px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:white;border:none;border-radius:14px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:white;border-radius:24px;padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;}
+/* Toast */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#333;color:white;border-radius:20px;padding:10px 20px;font-size:13px;z-index:400;white-space:nowrap;max-width:88vw;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s;}
+.toast.show{opacity:1;}
+/* Badge popup */
+.badge-popup{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:white;border-radius:20px;padding:14px 24px;box-shadow:0 8px 32px rgba(255,107,157,.4);z-index:500;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none;}
+.badge-popup.show{opacity:1;}
+/* Confetti */
+.confetti-piece{position:fixed;width:9px;height:9px;pointer-events:none;z-index:9999;animation:cffall 2s ease-in forwards;}
+@keyframes cffall{to{transform:translateY(112vh) rotate(720deg);opacity:0;}}
+/* Coin pop */
+.coin-pop{position:fixed;top:28%;left:50%;transform:translateX(-50%);z-index:9998;text-align:center;pointer-events:none;opacity:0;}
+.coin-pop.show{animation:coinpop .9s ease forwards;}
+@keyframes coinpop{0%{opacity:0;transform:translateX(-50%) translateY(20px) scale(.6)}45%{opacity:1;transform:translateX(-50%) translateY(-24px) scale(1.25)}100%{opacity:0;transform:translateX(-50%) translateY(-70px) scale(1)}}
+/* Wobble */
+@keyframes wobble{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(4deg) scale(1.05)}}
+.wobble{animation:wobble 3s ease-in-out infinite;display:inline-block;}
+/* Misc */
+.lbl{font-size:12px;color:#aaa;margin-bottom:4px;}
+.sec-title{font-weight:700;font-size:14px;margin-bottom:10px;}
+.divider{border:none;border-top:1px solid #f5eaff;margin:10px 0;}
+.mood-row{display:flex;gap:6px;}
+.mood-btn{flex:1;padding:8px 2px;border:2px solid #eee;border-radius:12px;background:white;cursor:pointer;font-family:inherit;text-align:center;}
+.mood-btn.sel{border-color:#ff6b9d;background:#fff0f6;}
+.stars-row{display:flex;gap:3px;}
+.star{font-size:24px;cursor:pointer;transition:transform .1s;filter:grayscale(1) opacity(.3);}
+.star.lit{filter:none;}
+.star.big{transform:scale(1.2);}
+.stamp-btn{padding:6px 10px;border-radius:12px;border:2px solid #eee;background:white;cursor:pointer;font-family:inherit;font-size:12px;color:#888;}
+.stamp-btn.sel{border-color:#ff6b9d;background:#fff0f6;color:#ff6b9d;font-weight:700;}
+.rec-item{border-left:4px solid #eee;padding-left:10px;margin-bottom:10px;}
+.rec-tags{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:3px;}
+.tag{font-size:11px;border-radius:8px;padding:1px 8px;font-weight:700;}
+.tag-sub{font-size:11px;color:#bbb;background:#f3f4f6;border-radius:8px;padding:1px 8px;}
+.tag-date{font-size:11px;color:#ddd;margin-left:auto;}
+.rec-note{font-size:13px;color:#555;}
+.rec-stars{font-size:12px;}
+/* Piggy bank */
+.piggy-card{border-radius:24px;padding:20px;border:2px solid rgba(0,0,0,.05);}
+.piggy-inner{display:flex;align-items:center;gap:16px;}
+.piggy-art{text-align:center;flex-shrink:0;}
+.piggy-art-emoji{font-size:72px;line-height:1;}
+.piggy-art-name{font-weight:700;font-size:13px;color:#555;margin-top:4px;}
+.piggy-coins{background:rgba(245,158,11,.15);border-radius:14px;padding:8px 14px;display:inline-block;margin:10px 0 4px;}
+.piggy-coins span{font-size:26px;font-weight:700;color:#d97706;}
+.piggy-coins small{font-size:12px;color:#92400e;margin-left:4px;}
+.piggy-alltime{font-size:11px;color:#aaa;}
+.prog-wrap{background:rgba(255,255,255,.6);border-radius:14px;padding:10px 14px;margin-top:10px;}
+.prog-head{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:5px;}
+.prog-bar{border-radius:8px;height:10px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:8px;transition:width .6s ease;}
+.prog-note{font-size:10px;color:#aaa;margin-top:3px;}
+/* Level map */
+.level-item{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:8px 10px;border-radius:14px;border:2px solid transparent;}
+.level-item.cur{background:linear-gradient(135deg,#fff0f6,#fff8f0);border-color:#ff6b9d;}
+.level-item.done{background:#f9fafb;}
+.level-item.locked{background:#f9fafb;opacity:.35;}
+/* Badge */
+.badge-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.badge-item{text-align:center;padding:8px 10px;border-radius:14px;flex:1 0 28%;}
+.badge-item.earned{background:#fffbeb;border:2px solid #fbbf24;}
+.badge-item.locked{background:#f9f9f9;border:2px solid #eee;}
+.badge-emoji{font-size:22px;}
+.badge-label{font-size:10px;font-weight:700;margin-top:2px;}
+/* Unit map */
+.unit-map{display:flex;flex-wrap:wrap;gap:6px;}
+.unit-chip{padding:6px 10px;border-radius:10px;min-width:68px;text-align:center;}
+.unit-name{font-size:11px;font-weight:700;}
+.unit-score{font-size:10px;}
+/* Test item */
+.test-item{display:flex;justify-content:space-between;padding:7px 10px;background:#f9fafb;border-radius:10px;margin-bottom:6px;align-items:center;}
+.test-name{font-size:13px;font-weight:700;color:#555;}
+.test-date{font-size:11px;color:#bbb;}
+.test-score{font-weight:700;font-size:18px;}
+/* Data mgmt */
+.data-card{border:2px solid #e0f0ff;}
+.data-row{display:flex;gap:8px;}
+.data-btn{flex:1;padding:11px;border:none;border-radius:14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+.bar-chart-wrap{display:flex;align-items:flex-end;gap:8px;height:100px;margin-top:8px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bar-fill{width:100%;border-radius:6px 6px 0 0;transition:height .5s ease;min-height:2px;}
+.bar-lbl{font-size:10px;color:#aaa;}
+.bar-val{font-size:10px;font-weight:700;color:#f59e0b;}
+/* Subject bar */
+.subj-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.subj-bar-name{font-size:13px;font-weight:700;width:64px;flex-shrink:0;}
+.subj-bar-track{flex:1;background:#f9f0ff;border-radius:8px;height:14px;overflow:hidden;}
+.subj-bar-fill{height:100%;border-radius:8px;transition:width .5s;}
+.subj-bar-val{font-size:13px;font-weight:700;width:40px;text-align:right;flex-shrink:0;}
+/* Canvas radar */
+.radar-wrap{position:relative;width:100%;height:220px;}
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Badge popup -->
+<div class="badge-popup" id="badgePopup">
+  <div id="badgeEmoji" style="font-size:36px"></div>
+  <div style="font-weight:700;color:#ff6b9d">バッジゲット！</div>
+  <div id="badgeLabel" style="color:#888;font-size:12px"></div>
+</div>
+
+<!-- Coin pop -->
+<div class="coin-pop" id="coinPop">
+  <div style="font-size:52px">🪙</div>
+  <div id="coinAmount" style="font-weight:700;font-size:24px;color:#f59e0b;text-shadow:0 2px 8px rgba(245,158,11,.5)"></div>
+</div>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="hdr-row">
+    <div class="hdr-char" id="hdrChar">🥚</div>
+    <div class="hdr-info">
+      <div class="hdr-title">まなびノート</div>
+      <div class="hdr-sub" id="hdrSub">0日記録 🪙今月0円 📝0回</div>
+      <div id="syncIndicator" style="font-size:10px;color:#22c55e;margin-top:2px">☁️ 保存済み</div>
+    </div>
+    <button class="hdr-gear" onclick="loadFromCloud()" style="font-size:14px;padding:6px 8px">☁️</button>
+  </div>
+  <div class="streak-bar" id="streakBar"></div>
+</div>
+
+<!-- Content area -->
+<div class="content" id="content"></div>
+
+<!-- Bottom nav -->
+<nav class="nav">
+  <button class="nav-btn active" id="navHome" onclick="switchTab('home')"><div class="nav-icon">🏠</div>ホーム</button>
+  <button class="nav-btn" id="navOkozukai" onclick="switchTab('okozukai')"><div class="nav-icon">🪙</div>おこづかい</button>
+  <button class="nav-btn" id="navTest" onclick="switchTab('test')"><div class="nav-icon">📝</div>テスト</button>
+  <button class="nav-btn" id="navAnalysis" onclick="switchTab('analysis')"><div class="nav-icon">📊</div>ぶんせき</button>
+  <button class="nav-btn" id="navHelp" onclick="switchTab('help')"><div class="nav-icon">⚙️</div>設定</button>
+</nav>
+
+<!-- Settings Modal -->
+<div class="modal-bg" id="settingsModal" style="display:none">
+  <div class="modal">
+    <div style="font-weight:700;font-size:18px;color:#ff6b9d;margin-bottom:16px">⚙️ おこづかいの設定</div>
+    <div style="margin-bottom:16px">
+      <div class="lbl">1回記録したらもらえる金額</div>
+      <div class="pills" id="cprPills"></div>
+      <div style="font-size:11px;color:#aaa;margin-top:6px">テストの記録はこの金額＋点数ボーナス</div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div class="lbl">テストのボーナス（点数÷10円）</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="setTestBonus(true)" id="tbOn" style="flex:1;padding:10px;border-radius:12px;border:2px solid #eee;background:white;color:#aaa;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">あり</button>
+        <button onclick="setTestBonus(false)" id="tbOff" style="flex:1;padding:10px;border-radius:12px;border:2px solid #3b82f6;background:#eff6ff;color:#3b82f6;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">なし</button>
+      </div>
+      <div id="tbNote" style="font-size:11px;color:#aaa;margin-top:4px"></div>
+    </div>
+    <div style="background:#fff8e1;border-radius:14px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#92400e">
+      💡 おこづかいは<strong>毎月リセット</strong>されます。キャラクター成長は累計で続きます。
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeSettings()" style="flex:1;padding:12px;border:2px solid #eee;border-radius:14px;background:white;color:#aaa;font-weight:700;cursor:pointer;font-family:inherit">キャンセル</button>
+      <button onclick="saveSettings()" style="flex:2;padding:12px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff8c61,#ff6b9d);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px">💾 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rate change retroactive dialog -->
+<div id="rateDialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:white;border-radius:24px;padding:24px;width:100%;max-width:360px;">
+    <div style="font-size:24px;text-align:center;margin-bottom:8px">📐</div>
+    <div id="rateDialogMsg" style="font-weight:700;color:#6366f1;font-size:15px;text-align:center;margin-bottom:16px"></div>
+    <div style="font-size:13px;color:#666;text-align:center;margin-bottom:20px">いつから反映する？</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="applyRateChange(false)" style="padding:14px;border-radius:14px;border:2px solid #6366f1;background:#eef2ff;color:#6366f1;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px">
+        今から反映する<br><span style="font-size:11px;font-weight:400;color:#aaa">今月の過去のテスト記録はそのまま</span>
+      </button>
+      <button onclick="applyRateChange(true)" style="padding:14px;border-radius:14px;border:2px solid #3b82f6;background:#eff6ff;color:#3b82f6;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px">
+        今月分にさかのぼって反映する<br><span style="font-size:11px;font-weight:400;color:#aaa">今月のテスト記録のボーナスを新しい倍率で再計算</span>
+      </button>
+      <button onclick="document.getElementById('rateDialog').style.display='none'" style="padding:10px;border-radius:12px;border:2px solid #eee;background:white;color:#aaa;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- Coin change retroactive dialog -->
+<div id="cprDialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:white;border-radius:24px;padding:24px;width:100%;max-width:360px;">
+    <div style="font-size:24px;text-align:center;margin-bottom:8px">🪙</div>
+    <div id="cprDialogMsg" style="font-weight:700;color:#ff6b9d;font-size:15px;text-align:center;margin-bottom:16px"></div>
+    <div style="font-size:13px;color:#666;text-align:center;margin-bottom:20px">いつから反映する？</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="applyCprChange(false)" style="padding:14px;border-radius:14px;border:2px solid #ff6b9d;background:#fff0f6;color:#ff6b9d;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px">
+        今から反映する<br><span style="font-size:11px;font-weight:400;color:#aaa">今月の過去の記録はそのまま</span>
+      </button>
+      <button onclick="applyCprChange(true)" style="padding:14px;border-radius:14px;border:2px solid #3b82f6;background:#eff6ff;color:#3b82f6;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px">
+        今月分にさかのぼって反映する<br><span style="font-size:11px;font-weight:400;color:#aaa">今月の勉強記録コインを全部新しい金額に更新</span>
+      </button>
+      <button onclick="document.getElementById('cprDialog').style.display='none'" style="padding:10px;border-radius:12px;border:2px solid #eee;background:white;color:#aaa;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────
+const KEY = "manabiStandalone1";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbw5p83peNltjRqxQr_2BfrgwGg9csdvXbEToi1j8IxDEesGqBjcWRGe1nP4H41uphuv/exec";
+const GAS_TOKEN = "manabisecret";
+const SUBJECTS = ["算数","国語","理科","社会","英語","公文"];
+const EMOJI = {算数:"🔢",国語:"📖",理科:"🔬",社会:"🌍",英語:"🌎",公文:"✏️"};
+const COLOR = {算数:"#f97316",国語:"#ec4899",理科:"#22c55e",社会:"#3b82f6",英語:"#a855f7",公文:"#f59e0b"};
+const UNITS = {
+  算数:["たし算・ひき算","かけ算・わり算","分数","小数","図形","面積","速さ","文章題","その他"],
+  国語:["漢字","読解（物語）","読解（説明文）","作文","文法","慣用句","その他"],
+  理科:["植物・動物","天気","水・空気","光・音","電気","人体","その他"],
+  社会:["地理","歴史","公民","地図","産業","その他"],
+  英語:["単語","リスニング","スピーキング","読み書き","文法","その他"],
+  公文:["計算","文章題","英語","その他"],
+};
+const STAMPS = [
+  {id:"wakatta",e:"💡",l:"わかった！"},
+  {id:"muzukashi",e:"😤",l:"むずかし"},
+  {id:"tanoshi",e:"🎉",l:"たのしい！"},
+  {id:"motto",e:"🔥",l:"もっとやる"},
+  {id:"tsukareta",e:"😮‍💨",l:"つかれた"},
+  {id:"kanpeki",e:"✨",l:"かんぺき！"},
+];
+const MOODS = [{v:5,e:"😄",l:"最高！"},{v:4,e:"😊",l:"よかった"},{v:3,e:"😐",l:"ふつう"},{v:2,e:"😕",l:"むずかった"},{v:1,e:"😞",l:"つらい"}];
+const CHAR_LEVELS = [
+  {min:0,   name:"たまご",  art:"🥚",desc:"まだねむっているよ…",           bg:"#fef9e7"},
+  {min:50,  name:"ひよこ",  art:"🐣",desc:"うまれたよ！いっしょにがんばろ！",bg:"#fffbeb"},
+  {min:150, name:"こねこ",  art:"🐱",desc:"にゃー！もっとおしえて！",       bg:"#fdf4ff"},
+  {min:350, name:"うさぎ",  art:"🐰",desc:"ぴょん！まいにちえらいね！",     bg:"#f0fdf4"},
+  {min:700, name:"きつね",  art:"🦊",desc:"かしこくなってきたね！",         bg:"#fff7ed"},
+  {min:1200,name:"ライオン",art:"🦁",desc:"すごい！おうさまだ！",           bg:"#fef2f2"},
+  {min:2000,name:"ドラゴン",art:"🐲",desc:"つよすぎる…！でんせつだ！",     bg:"#eff6ff"},
+];
+const BADGES = [
+  {id:"first",   e:"🌱",l:"はじめての記録", check:(r)=>r.length>=1},
+  {id:"streak7", e:"🔥",l:"7日連続！",      check:(r)=>calcStreak(r)>=7},
+  {id:"rec30",   e:"🏆",l:"30回記録！",     check:(r)=>r.length>=30},
+  {id:"allsub",  e:"🌈",l:"全教科制覇！",   check:(r)=>new Set(r.map(x=>x.subject)).size>=6},
+  {id:"test10",  e:"📝",l:"テスト10回！",   check:(_,t)=>t.length>=10},
+  {id:"coin500", e:"💰",l:"500円貯めた！",  check:(_,_2,c)=>c>=500},
+  {id:"coin1000",e:"👛",l:"1000円貯めた！", check:(_,_2,c)=>c>=1000},
+];
+
+// ── State ─────────────────────────────────────────────────────────
+let data = loadData();
+let currentTab = "home";
+let tmpSubject = "算数";
+let tmpUnit = UNITS["算数"][0];
+let tmpStamps = [];
+let tmpMood = 3;
+let tmpStars = 3;
+let tmpNote = "";
+let tmpTSubject = "算数";
+let tmpAnaSubject = "算数";
+let settingsCpr = 5;
+let settingsTb = true;
+let showTestForm = false;
+let radarChart = null;
+
+// ── Storage ───────────────────────────────────────────────────────
+function loadData() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY));
+    if (!raw) return initData();
+    return migrate(raw);
+  } catch { return initData(); }
+}
+function saveData() {
+  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {}
+  syncToCloud();
+}
+
+// ── Cloud sync ────────────────────────────────────────────────────
+let syncTimer = null;
+let pendingCpr = 5;
+let pendingRate = 1.5;
+let syncStatus = "ok"; // ok | syncing | error
+
+function syncToCloud() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    setSyncStatus("syncing");
+    try {
+      const res = await fetch(GAS_URL, {
+        method: "POST",
+        headers: {"Content-Type":"text/plain"},
+        body: JSON.stringify({action:"save", token: GAS_TOKEN, data})
+      });
+      const json = await res.json();
+      if (json.ok) setSyncStatus("ok");
+      else setSyncStatus("error");
+    } catch { setSyncStatus("error"); }
+  }, 1500);
+}
+
+async function loadFromCloud() {
+  setSyncStatus("syncing");
+  try {
+    const res = await fetch(GAS_URL + "?t=" + Date.now());
+    const json = await res.json();
+    if (json.ok && json.data) {
+      data = migrate(json.data);
+      localStorage.setItem(KEY, JSON.stringify(data));
+      setSyncStatus("ok");
+      updateHeader();
+      renderTab();
+      showToast("クラウドからデータを読み込んだよ！☁️");
+    } else {
+      setSyncStatus("ok");
+      showToast("クラウドにデータがまだないよ。記録を始めよう！");
+    }
+  } catch {
+    setSyncStatus("error");
+    showToast("クラウドに接続できなかったよ。オフラインで続けられます。");
+  }
+}
+
+function setSyncStatus(status) {
+  syncStatus = status;
+  const el = document.getElementById("syncIndicator");
+  if (!el) return;
+  if (status === "ok") { el.textContent = "☁️ 保存済み"; el.style.color = "#22c55e"; }
+  else if (status === "syncing") { el.textContent = "☁️ 保存中…"; el.style.color = "#f59e0b"; }
+  else { el.textContent = "⚠️ 保存失敗"; el.style.color = "#ef4444"; }
+}
+function initData() {
+  return {records:[],tests:[],earnedBadges:[],monthlyCoins:{},allTimeCoins:0,
+    weekStudy:{月:0,火:0,水:0,木:0,金:0,土:0,日:0},settings:{coinsPerRecord:5,testBonus:true,testBonusRate:1.5}};
+}
+function migrate(d) {
+  if (!d.monthlyCoins) {
+    const m = thisMonth();
+    d.monthlyCoins = {[m]:{earned:d.totalCoins||0,log:d.coinLog||[]}};
+    d.allTimeCoins = d.totalCoins||0;
+    delete d.totalCoins; delete d.coinLog;
+  }
+  if (!d.allTimeCoins) d.allTimeCoins = 0;
+  if (!d.settings) d.settings = {coinsPerRecord:5,testBonus:true,testBonusRate:1.5};
+  if (d.settings.testBonusRate===undefined) d.settings.testBonusRate=1.5;
+  return d;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function today() { return new Date().toISOString().split("T")[0]; }
+function thisMonth() { return new Date().toISOString().slice(0,7); }
+function fmtDate(d) { return d ? d.slice(5).replace("-","/") : ""; }
+function getLevel(coins) { return [...CHAR_LEVELS].reverse().find(l=>coins>=l.min)||CHAR_LEVELS[0]; }
+function getNextLevel(coins) { return CHAR_LEVELS.find(l=>l.min>coins)||null; }
+function calcStreak(records) {
+  const dates = [...new Set(records.map(r=>r.date))].sort();
+  let best=1,cur=1;
+  for(let i=dates.length-1;i>0;i--){
+    const d=(new Date(dates[i])-new Date(dates[i-1]))/86400000;
+    if(d===1){cur++;best=Math.max(best,cur);}else cur=1;
+  }
+  return dates.length?best:0;
+}
+function monthCoins() { return (data.monthlyCoins[thisMonth()]||{earned:0}).earned; }
+function monthLog() { return (data.monthlyCoins[thisMonth()]||{log:[]}).log; }
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),2500);
+}
+
+// ── Confetti ──────────────────────────────────────────────────────
+function fireConfetti() {
+  const cols=["#ff6b9d","#ff8c61","#facc15","#4ade80","#60a5fa","#c084fc"];
+  for(let i=0;i<30;i++){
+    const el=document.createElement("div");
+    el.className="confetti-piece";
+    el.style.cssText=`left:${3+Math.random()*94}%;top:-8%;border-radius:${Math.random()>.5?"50%":"2px"};background:${cols[i%6]};animation-duration:${1.4+Math.random()*1.6}s;animation-delay:${Math.random()*.7}s;transform:rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2500);
+  }
+}
+
+// ── Coin Pop ──────────────────────────────────────────────────────
+function showCoinPop(amount) {
+  const el=document.getElementById("coinPop");
+  document.getElementById("coinAmount").textContent=`+${amount}円！`;
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),1000);
+}
+
+// ── Badge popup ───────────────────────────────────────────────────
+function showBadge(badge) {
+  document.getElementById("badgeEmoji").textContent=badge.e;
+  document.getElementById("badgeLabel").textContent=badge.l;
+  const el=document.getElementById("badgePopup");
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),3000);
+}
+
+// ── Coin award ────────────────────────────────────────────────────
+function awardCoins(amount, reason) {
+  const m = thisMonth();
+  if (!data.monthlyCoins[m]) data.monthlyCoins[m]={earned:0,log:[]};
+  data.monthlyCoins[m].earned += amount;
+  data.monthlyCoins[m].log.unshift({date:today(),amount,reason});
+  if (data.monthlyCoins[m].log.length>200) data.monthlyCoins[m].log=data.monthlyCoins[m].log.slice(0,200);
+  data.allTimeCoins = Object.values(data.monthlyCoins).reduce((a,b)=>a+(b.earned||0),0);
+  checkBadges();
+  saveData();
+  fireConfetti();
+  showCoinPop(amount);
+}
+
+// ── Badge check ───────────────────────────────────────────────────
+function checkBadges() {
+  BADGES.forEach(b=>{
+    if (!data.earnedBadges.includes(b.id) && b.check(data.records,data.tests,data.allTimeCoins)) {
+      data.earnedBadges.push(b.id);
+      setTimeout(()=>showBadge(b),400);
+    }
+  });
+}
+
+// ── Record submit ─────────────────────────────────────────────────
+function submitRecord() {
+  if (!tmpNote.trim()) { showToast("一言でいいので書いてね！"); return; }
+  const rec={id:Date.now(),date:today(),subject:tmpSubject,unit:tmpUnit,note:tmpNote,mood:tmpMood,stars:tmpStars,stamps:[...tmpStamps]};
+  data.records.unshift(rec);
+  checkBadges();
+  const coins = data.settings.coinsPerRecord;
+  awardCoins(coins,`${tmpSubject}・${tmpUnit}の記録`);
+  tmpNote=""; tmpMood=3; tmpStars=3; tmpStamps=[];
+  saveData();
+  showToast(`記録したよ！🌸 +${coins}円！`);
+  updateHeader();
+  switchTab("home");
+}
+
+// ── Test submit ───────────────────────────────────────────────────
+function submitTest() {
+  const name = document.getElementById("tName").value.trim();
+  const score = parseInt(document.getElementById("tScore").value);
+  const date = document.getElementById("tDate").value || today();
+  if (!name || isNaN(score) || score<0 || score>100) { showToast("テスト名と点数(0-100)を入力してね"); return; }
+  data.tests.unshift({id:Date.now(),date,subject:tmpTSubject,name,score});
+  checkBadges();
+  let coins = data.settings.coinsPerRecord;
+  if (data.settings.testBonus) coins += Math.round(score*(data.settings.testBonusRate||1.5)/10);
+  awardCoins(coins,`${name}(${score}点)のテスト記録`);
+  saveData();
+  showToast(`テスト記録！+${coins}円！${score>=90?"🎉":score>=70?"✨":"💪"}`);
+  showTestForm=false;
+  updateHeader();
+  switchTab("test");
+}
+
+// ── Export/Import ─────────────────────────────────────────────────
+function exportData() {
+  const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),version:"standalone1",data},null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`manabiNote_${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast("データをダウンロードしたよ！📁");
+}
+function importData(e) {
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      const parsed=JSON.parse(ev.target.result);
+      data=migrate(parsed.data||parsed);
+      saveData(); updateHeader(); switchTab("home");
+      showToast("データを読み込んだよ！✨");
+    } catch { showToast("読み込みに失敗したよ。JSONファイルを確認してね。"); }
+  };
+  reader.readAsText(file);
+  e.target.value="";
+}
+
+// ── Settings ──────────────────────────────────────────────────────
+function openSettings() {
+  if (!data.settings) data.settings = {coinsPerRecord:5, testBonus:true};
+  settingsCpr = data.settings.coinsPerRecord || 5;
+  settingsTb = data.settings.testBonus !== false;
+  const pills=[1,3,5,10,20,50];
+  document.getElementById("cprPills").innerHTML=pills.map(v=>
+    `<button class="pill${v===settingsCpr?' sel':''}" style="${v===settingsCpr?'border-color:#ff6b9d;background:#fff0f6;color:#ff6b9d':''}" onclick="setCpr(${v})">${v}円</button>`
+  ).join("");
+  renderTbButtons();
+  document.getElementById("settingsModal").style.display="flex";
+}
+function setCpr(v){
+  settingsCpr=v;
+  document.querySelectorAll("#cprPills .pill").forEach((b,i)=>{
+    const val=[1,3,5,10,20,50][i];
+    if(val===v){b.style.cssText="border-color:#ff6b9d;background:#fff0f6;color:#ff6b9d";b.classList.add("sel");}
+    else{b.style.cssText="";b.classList.remove("sel");}
+  });
+}
+function setTestBonus(v){
+  settingsTb=v;
+  renderTbButtons();
+}
+function renderTbButtons(){
+  const on=document.getElementById("tbOn"),off=document.getElementById("tbOff");
+  if(settingsTb){
+    on.style.cssText="flex:1;padding:10px;border-radius:12px;border:2px solid #3b82f6;background:#eff6ff;color:#3b82f6;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px";
+    off.style.cssText="flex:1;padding:10px;border-radius:12px;border:2px solid #eee;background:white;color:#aaa;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px";
+    document.getElementById("tbNote").textContent="例: 85点→8円、100点→10円のボーナス";
+  } else {
+    on.style.cssText="flex:1;padding:10px;border-radius:12px;border:2px solid #eee;background:white;color:#aaa;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px";
+    off.style.cssText="flex:1;padding:10px;border-radius:12px;border:2px solid #3b82f6;background:#eff6ff;color:#3b82f6;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px";
+    document.getElementById("tbNote").textContent="";
+  }
+}
+function closeSettings(){ document.getElementById("settingsModal").style.display="none"; }
+function saveSettings(){
+  data.settings.coinsPerRecord=settingsCpr;
+  data.settings.testBonus=settingsTb;
+  saveData(); closeSettings(); showToast("設定を保存したよ！");
+}
+
+// ── Header update ─────────────────────────────────────────────────
+function updateHeader() {
+  const lv=getLevel(data.allTimeCoins);
+  document.getElementById("hdrChar").textContent=lv.art;
+  const streak=calcStreak(data.records);
+  document.getElementById("hdrSub").textContent=`🔥${streak}日連続　🪙今月${monthCoins()}円　📝${data.records.length}回`;
+  const bar=document.getElementById("streakBar");
+  bar.innerHTML=Array.from({length:7},(_,i)=>`<div class="streak-dot" style="background:${i<Math.min(streak,7)?"rgba(255,255,255,.85)":"rgba(255,255,255,.25)"}"></div>`).join("");
+}
+
+// ── Tab switch ────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab=tab;
+  ["home","okozukai","test","analysis","help"].forEach(t=>{
+    document.getElementById("nav"+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle("active",t===tab);
+  });
+  renderTab();
+}
+
+// ── Render ────────────────────────────────────────────────────────
+function renderTab() {
+  if (radarChart) { radarChart.destroy(); radarChart=null; }
+  const el=document.getElementById("content");
+  if (currentTab==="home") el.innerHTML=renderHome();
+  else if (currentTab==="okozukai") el.innerHTML=renderOkozukai();
+  else if (currentTab==="test") el.innerHTML=renderTest();
+  else if (currentTab==="analysis") el.innerHTML=renderAnalysis();
+  else if (currentTab==="help") el.innerHTML=renderHelp();
+  postRender();
+}
+
+function postRender() {
+  if (currentTab==="analysis" && data.records.length>=3) renderRadar();
+  if (currentTab==="analysis") renderSubjBars();
+}
+
+// ── HOME ──────────────────────────────────────────────────────────
+function renderHome() {
+  const lv=getLevel(data.allTimeCoins);
+  const todayRecs=data.records.filter(r=>r.date===today());
+  if (!data.settings) data.settings = {coinsPerRecord:5, testBonus:true};
+  const coins=data.settings.coinsPerRecord||5;
+  return `
+  <div class="card" style="background:linear-gradient(135deg,#fff0f6,#fff8f0);border:2px solid #ffd0e8">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:700;color:#ff6b9d;font-size:15px">🌸 今日のキロク</div>
+        <div style="font-size:13px;color:#aaa;margin-top:2px">今日 ${todayRecs.length}回記録したよ！</div>
+        <div style="font-size:12px;color:#f59e0b;margin-top:4px;font-weight:700">🪙 今月 ${monthCoins()}円ゲット！</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:36px">${lv.art}</div>
+        <div style="font-size:10px;font-weight:700;color:#f59e0b">${lv.name}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#ff6b9d;font-size:14px;margin-bottom:3px">✏️ 今日のがんばりを記録</div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:12px">記録するたびに 🪙 +${coins}円もらえるよ！</div>
+
+    <div style="margin-bottom:10px">
+      <div class="lbl">教科</div>
+      <div class="pills">${SUBJECTS.map(s=>`<button class="pill" id="subj_${s}" onclick="selSubject('${s}')" style="${s===tmpSubject?'border-color:'+COLOR[s]+';background:'+COLOR[s]+'18;color:'+COLOR[s]:''}">${EMOJI[s]} ${s}</button>`).join("")}</div>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div class="lbl">単元</div>
+      <select class="inp" id="unitSel" onchange="tmpUnit=this.value">${(UNITS[tmpSubject]||[]).map(u=>`<option${u===tmpUnit?" selected":""}>${u}</option>`).join("")}</select>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div class="lbl">スタンプ（複数OK）</div>
+      <div class="pills">${STAMPS.map(s=>`<button class="stamp-btn${tmpStamps.includes(s.id)?" sel":""}" onclick="toggleStamp('${s.id}',this)">${s.e} ${s.l}</button>`).join("")}</div>
+    </div>
+
+    <textarea class="inp" id="noteInp" placeholder="今日やったこと・わかったこと・むずかしかったことを書こう！" style="min-height:75px;margin-bottom:10px" oninput="tmpNote=this.value">${tmpNote}</textarea>
+
+    <div style="margin-bottom:10px">
+      <div class="lbl">気分</div>
+      <div class="mood-row">${MOODS.map(m=>`<button class="mood-btn${tmpMood===m.v?" sel":""}" onclick="selMood(${m.v},this)"><div style="font-size:18px">${m.e}</div><div style="font-size:9px;color:${tmpMood===m.v?"#ff6b9d":"#ccc"};font-weight:700">${m.l}</div></button>`).join("")}</div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div class="lbl">できた？</div>
+      <div class="stars-row">${[1,2,3,4,5].map(s=>`<span class="star${s<=tmpStars?" lit":""}${s===tmpStars?" big":""}" onclick="selStars(${s})">⭐</span>`).join("")}</div>
+    </div>
+
+    <button class="btn-pink" onclick="submitRecord()">🪙 記録して +${coins}円！</button>
+  </div>
+
+  ${data.records.length>0?`
+  <div class="card">
+    <div class="sec-title">📋 最近の記録</div>
+    ${data.records.slice(0,5).map(r=>`
+    <div class="rec-item" style="border-color:${COLOR[r.subject]}">
+      <div class="rec-tags">
+        <span class="tag" style="background:${COLOR[r.subject]}20;color:${COLOR[r.subject]}">${r.subject}</span>
+        ${r.unit&&r.unit!=="その他"?`<span class="tag-sub">${r.unit}</span>`:""}
+        ${(r.stamps||[]).map(sid=>{const s=STAMPS.find(x=>x.id===sid);return s?`<span style="font-size:13px">${s.e}</span>`:""}).join("")}
+        <span class="tag-date">${fmtDate(r.date)}</span>
+      </div>
+      ${r.note?`<div class="rec-note">${r.note}</div>`:""}
+      <div class="rec-stars">${"⭐".repeat(r.stars||0)}</div>
+    </div>`).join("")}
+  </div>`:""}
+
+  <div class="card data-card">
+    <div style="font-weight:700;color:#3b82f6;font-size:14px;margin-bottom:10px">💾 データの管理</div>
+    <div class="data-row">
+      <button class="data-btn" onclick="exportData()" style="background:linear-gradient(135deg,#3b82f6,#6366f1);color:white">📥 JSONで書き出し</button>
+      <label class="data-btn" style="background:white;border:2px solid #3b82f6;color:#3b82f6;text-align:center;cursor:pointer;display:flex;align-items:center;justify-content:center">
+        📤 データを読み込む
+        <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+      </label>
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-top:8px">書き出したJSONは次のバージョンへの引き継ぎに使えます</div>
+  </div>
+  `;
+}
+
+function selSubject(s) {
+  tmpSubject=s; tmpUnit=UNITS[s][0];
+  SUBJECTS.forEach(sub=>{
+    const b=document.getElementById("subj_"+sub);
+    if(!b)return;
+    if(sub===s){b.style.cssText=`border-color:${COLOR[s]};background:${COLOR[s]}18;color:${COLOR[s]}`;b.classList.add("sel");}
+    else{b.style.cssText="";b.classList.remove("sel");}
+  });
+  const sel=document.getElementById("unitSel");
+  if(sel){sel.innerHTML=(UNITS[s]||[]).map(u=>`<option>${u}</option>`).join("");sel.value=tmpUnit;}
+}
+function toggleStamp(id,btn){
+  if(tmpStamps.includes(id)){tmpStamps=tmpStamps.filter(x=>x!==id);btn.classList.remove("sel");btn.style.cssText="";}
+  else{tmpStamps.push(id);btn.classList.add("sel");btn.style.cssText="border-color:#ff6b9d;background:#fff0f6;color:#ff6b9d;font-weight:700";}
+}
+function selMood(v,btn){
+  tmpMood=v;
+  document.querySelectorAll(".mood-btn").forEach((b,i)=>{
+    const mv=MOODS[i].v;
+    if(mv===v){b.classList.add("sel");b.querySelector("div:last-child").style.color="#ff6b9d";}
+    else{b.classList.remove("sel");b.querySelector("div:last-child").style.color="#ccc";}
+  });
+}
+function selStars(s){
+  tmpStars=s;
+  document.querySelectorAll(".star").forEach((el,i)=>{
+    const v=i+1;
+    el.classList.toggle("lit",v<=s);
+    el.classList.toggle("big",v===s);
+  });
+}
+
+// ── OKOZUKAI ──────────────────────────────────────────────────────
+function renderOkozukai() {
+  const lv=getLevel(data.allTimeCoins);
+  const next=getNextLevel(data.allTimeCoins);
+  const mc=monthCoins();
+  const monthTarget=data.settings.coinsPerRecord*20;
+  const monthPct=Math.min(100,Math.round(mc/Math.max(monthTarget,1)*100));
+  const levelPct=next?Math.min(100,Math.round(data.allTimeCoins/next.min*100)):100;
+
+  // 6-month history
+  const months=Array.from({length:6},(_,i)=>{
+    const d=new Date(); d.setMonth(d.getMonth()-5+i);
+    const ym=d.toISOString().slice(0,7);
+    const earned=(data.monthlyCoins[ym]||{earned:0}).earned;
+    return {label:`${parseInt(ym.slice(5))}月`,ym,earned};
+  });
+  const maxEarned=Math.max(...months.map(m=>m.earned),1);
+
+  // subject breakdown this month
+  const log=monthLog();
+  const subjEarned=SUBJECTS.map(s=>({s,total:log.filter(l=>l.reason.startsWith(s)).reduce((a,b)=>a+b.amount,0)})).filter(x=>x.total>0);
+  const maxSubj=Math.max(...subjEarned.map(x=>x.total),1);
+
+  const earnedBadges=BADGES.filter(b=>data.earnedBadges.includes(b.id));
+
+  return `
+  <div class="piggy-card" style="background:${lv.bg}">
+    <div class="piggy-inner">
+      <div class="piggy-art">
+        <div class="piggy-art-emoji wobble">${lv.art}</div>
+        <div class="piggy-art-name">${lv.name}</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:11px;color:#aaa">${lv.desc}</div>
+        <div class="piggy-coins"><span>🪙 ${mc.toLocaleString()}</span><small>円（今月）</small></div>
+        <div class="piggy-alltime">累計 ${data.allTimeCoins.toLocaleString()}円</div>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-head"><span>📅 今月のおこづかい進捗</span><span style="font-weight:700;color:#f59e0b">${monthPct}%</span></div>
+      <div class="prog-bar" style="background:#f0e0cc"><div class="prog-fill" style="width:${monthPct}%;background:linear-gradient(90deg,#f59e0b,#f97316)"></div></div>
+      <div class="prog-note">目標 ${monthTarget}円</div>
+    </div>
+    ${next?`
+    <div class="prog-wrap">
+      <div class="prog-head"><span>⬆️ 次の「${next.name}」まで あと${next.min-data.allTimeCoins}円</span><span style="font-weight:700;color:#a855f7">${levelPct}%</span></div>
+      <div class="prog-bar" style="background:#e0d4ff"><div class="prog-fill" style="width:${levelPct}%;background:linear-gradient(90deg,#a78bfa,#ec4899)"></div></div>
+    </div>`:`<div style="text-align:center;font-size:13px;color:#a855f7;font-weight:700;margin-top:10px">✨ さいこうレベル！でんせつのドラゴンだ！</div>`}
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="sec-title" style="color:#f59e0b">📅 月ごとのおこづかい</div>
+    <div class="bar-chart-wrap">
+      ${months.map(m=>`
+      <div class="bar-col">
+        <div class="bar-val">${m.earned>0?m.earned+"円":""}</div>
+        <div class="bar-fill" style="height:${Math.round(m.earned/maxEarned*80)}px;background:${m.ym===thisMonth()?"#f59e0b":"#fcd34d"}"></div>
+        <div class="bar-lbl">${m.label}</div>
+      </div>`).join("")}
+    </div>
+    <div style="font-size:11px;color:#aaa;text-align:center;margin-top:6px">色が濃いのが今月</div>
+  </div>
+
+  ${subjEarned.length>0?`
+  <div class="card">
+    <div class="sec-title">📚 今月の教科別かせいだ金額</div>
+    ${subjEarned.map(({s,total})=>`
+    <div class="subj-bar-row">
+      <span class="subj-bar-name" style="color:${COLOR[s]}">${EMOJI[s]} ${s}</span>
+      <div class="subj-bar-track"><div class="subj-bar-fill" style="width:${Math.round(total/maxSubj*100)}%;background:${COLOR[s]}"></div></div>
+      <span class="subj-bar-val" style="color:${COLOR[s]}">${total}円</span>
+    </div>`).join("")}
+  </div>`:""}
+
+  <div class="card">
+    <div class="sec-title">🗺️ キャラクターの成長マップ</div>
+    ${CHAR_LEVELS.map(l=>{
+      const reached=data.allTimeCoins>=l.min;
+      const cur=lv.min===l.min;
+      return `<div class="level-item ${cur?"cur":reached?"done":"locked"}">
+        <div style="font-size:28px">${l.art}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;color:${cur?"#ff6b9d":"#555"};font-size:13px">${l.name}${cur?" ← いまここ！":""}</div>
+          <div style="font-size:11px;color:#aaa">累計 ${l.min}円から</div>
+        </div>
+        ${reached?`<div style="font-size:18px">✅</div>`:""}
+      </div>`;
+    }).join("")}
+  </div>
+
+  <div class="card">
+    <div class="sec-title" style="color:#f59e0b">🏅 バッジ</div>
+    <div class="badge-grid">
+      ${BADGES.map(b=>{
+        const earned=data.earnedBadges.includes(b.id);
+        return `<div class="badge-item ${earned?"earned":"locked"}">
+          <div class="badge-emoji" style="${earned?"":"filter:grayscale(1) opacity(.25)"}">${b.e}</div>
+          <div class="badge-label" style="color:${earned?"#92400e":"#ccc"}">${b.l}</div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>
+
+  ${monthLog().length>0?`
+  <div class="card">
+    <div class="sec-title">🧾 今月かせいだ記録</div>
+    ${monthLog().slice(0,15).map(l=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #fef9f0">
+      <div><div style="font-size:13px;color:#555">${l.reason}</div><div style="font-size:11px;color:#ccc">${fmtDate(l.date)}</div></div>
+      <div style="font-weight:700;color:#f59e0b;font-size:15px">+${l.amount}円</div>
+    </div>`).join("")}
+  </div>`:""}
+  `;
+}
+
+// ── TEST ──────────────────────────────────────────────────────────
+function renderTest() {
+  const bonus = data.settings.testBonus;
+  return `
+  <button onclick="toggleTestForm()" style="width:100%;padding:13px;background:${showTestForm?"#f3f4f6":"linear-gradient(135deg,#3b82f6,#6366f1)"};color:${showTestForm?"#888":"white"};border:none;border-radius:16px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;margin-bottom:14px">
+    ${showTestForm?"✕ とじる":"📝 テスト・検定を記録する"}
+  </button>
+
+  ${showTestForm?`
+  <div class="card" style="border-top:4px solid #3b82f6">
+    <div style="font-size:11px;color:#3b82f6;font-weight:700;margin-bottom:12px">記録で +${data.settings.coinsPerRecord}円${bonus?" ＋点数ボーナスも！":""}🪙</div>
+    <div style="margin-bottom:10px">
+      <div class="lbl">教科</div>
+      <div class="pills">${SUBJECTS.map(s=>`<button class="pill" id="tsubj_${s}" onclick="selTSubject('${s}')" style="${s===tmpTSubject?'border-color:'+COLOR[s]+';background:'+COLOR[s]+'18;color:'+COLOR[s]:''}">${EMOJI[s]} ${s}</button>`).join("")}</div>
+    </div>
+    <input class="inp" id="tName" placeholder="テスト名（例：算数検定6級）" style="margin-bottom:10px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><div class="lbl">点数</div><input class="inp" id="tScore" type="number" min="0" max="100" placeholder="85" oninput="updateTestBonus()"></div>
+      <div><div class="lbl">受けた日</div><input class="inp" id="tDate" type="date" value="${today()}"></div>
+    </div>
+    <div id="testBonusPreview" style="display:none;background:#eff6ff;border-radius:12px;padding:8px 12px;font-size:12px;color:#3b82f6;font-weight:700;margin-bottom:10px"></div>
+    <button class="btn-blue" onclick="submitTest()">記録する 📊</button>
+  </div>`:""}
+
+  ${SUBJECTS.map(s=>{
+    const ts=data.tests.filter(t=>t.subject===s);
+    if(!ts.length)return"";
+    const avg=(ts.reduce((a,b)=>a+b.score,0)/ts.length).toFixed(1);
+    const best=Math.max(...ts.map(t=>t.score));
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:700;color:${COLOR[s]};font-size:14px">${EMOJI[s]} ${s}</div>
+        <div style="font-size:12px;color:#aaa">平均<strong style="color:${COLOR[s]}"> ${avg}点</strong>　最高<strong style="color:#22c55e"> ${best}点</strong></div>
+      </div>
+      ${ts.map(t=>`<div class="test-item">
+        <div><div class="test-name">${t.name}</div><div class="test-date">${fmtDate(t.date)}</div></div>
+        <div class="test-score" style="color:${t.score>=90?"#22c55e":t.score>=70?"#f59e0b":"#ef4444"}">${t.score}<span style="font-size:12px">点</span></div>
+      </div>`).join("")}
+    </div>`;
+  }).join("")}
+
+  ${data.tests.length===0?`<div class="card" style="text-align:center;padding:36px"><div style="font-size:44px">📝</div><div style="color:#ccc;font-size:14px;margin-top:8px">テストの記録がまだないよ。<br>上のボタンから追加しよう！</div></div>`:""}
+  `;
+}
+
+function toggleTestForm(){showTestForm=!showTestForm;renderTab();}
+function selTSubject(s){
+  tmpTSubject=s;
+  SUBJECTS.forEach(sub=>{
+    const b=document.getElementById("tsubj_"+sub);
+    if(!b)return;
+    if(sub===s){b.style.cssText=`border-color:${COLOR[s]};background:${COLOR[s]}18;color:${COLOR[s]}`;b.classList.add("sel");}
+    else{b.style.cssText="";b.classList.remove("sel");}
+  });
+}
+function updateTestBonus(){
+  const sc=parseInt(document.getElementById("tScore")?.value);
+  const prev=document.getElementById("testBonusPreview");
+  if(!prev)return;
+  if(data.settings.testBonus&&!isNaN(sc)&&sc>=0&&sc<=100){
+    const total=data.settings.coinsPerRecord+Math.round(sc*(data.settings.testBonusRate||1.5)/10);
+    prev.style.display="block";
+    prev.textContent=`🪙 合計 ${total}円もらえる！`;
+  } else { prev.style.display="none"; }
+}
+
+// ── ANALYSIS ──────────────────────────────────────────────────────
+function renderAnalysis() {
+  if(data.records.length<3){
+    return `<div class="card" style="text-align:center;padding:40px"><div style="font-size:44px">📊</div><div style="color:#ccc;font-size:14px;margin-top:8px">記録が3件以上になると<br>グラフが見られるよ！</div></div>`;
+  }
+  return `
+  <div class="card">
+    <div class="sec-title">🕸️ 教科バランス</div>
+    <div class="radar-wrap"><canvas id="radarCanvas"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="sec-title">📚 教科別かせいだ金額（今月）</div>
+    <div id="subjBarsWrap"></div>
+  </div>
+  <div class="card">
+    <div class="sec-title">🔍 単元別の苦手マップ</div>
+    <div class="pills" style="margin-bottom:10px">
+      ${SUBJECTS.map(s=>`<button class="pill" id="ana_${s}" onclick="selAnaSubject('${s}')" style="${s===tmpAnaSubject?'border-color:'+COLOR[s]+';background:'+COLOR[s]+'18;color:'+COLOR[s]:''}">${EMOJI[s]} ${s}</button>`).join("")}
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:6px">🟢 得意　🟡 ふつう　🟠 あと少し　🔴 要フォロー</div>
+    <div class="unit-map" id="unitMapWrap"></div>
+  </div>
+  `;
+}
+
+function renderRadar(){
+  const canvas=document.getElementById("radarCanvas");
+  if(!canvas)return;
+  const radarData=SUBJECTS.map(s=>{
+    const recs=data.records.filter(r=>r.subject===s);
+    const avg=recs.length?recs.reduce((a,b)=>a+b.stars,0)/recs.length:0;
+    return Math.round(avg*20);
+  });
+  radarChart=new Chart(canvas,{
+    type:"radar",
+    data:{labels:SUBJECTS,datasets:[{data:radarData,backgroundColor:"rgba(255,107,157,0.2)",borderColor:"#ff6b9d",borderWidth:2,pointBackgroundColor:"#ff6b9d",pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:"#f0e0ff"},pointLabels:{font:{size:12,family:"Zen Maru Gothic"},color:"#888"}}},plugins:{legend:{display:false}}}
+  });
+}
+
+function renderSubjBars(){
+  const log=monthLog();
+  const maxSubj=Math.max(...SUBJECTS.map(s=>log.filter(l=>l.reason.startsWith(s)).reduce((a,b)=>a+b.amount,0)),1);
+  const wrap=document.getElementById("subjBarsWrap");
+  if(!wrap)return;
+  wrap.innerHTML=SUBJECTS.map(s=>{
+    const total=log.filter(l=>l.reason.startsWith(s)).reduce((a,b)=>a+b.amount,0);
+    if(!total)return"";
+    return `<div class="subj-bar-row">
+      <span class="subj-bar-name" style="color:${COLOR[s]}">${EMOJI[s]} ${s}</span>
+      <div class="subj-bar-track"><div class="subj-bar-fill" style="width:${Math.round(total/maxSubj*100)}%;background:${COLOR[s]}"></div></div>
+      <span class="subj-bar-val" style="color:${COLOR[s]}">${total}円</span>
+    </div>`;
+  }).join("");
+  renderUnitMap();
+}
+
+function selAnaSubject(s){
+  tmpAnaSubject=s;
+  SUBJECTS.forEach(sub=>{
+    const b=document.getElementById("ana_"+sub);
+    if(!b)return;
+    if(sub===s){b.style.cssText=`border-color:${COLOR[s]};background:${COLOR[s]}18;color:${COLOR[s]}`;b.classList.add("sel");}
+    else{b.style.cssText="";b.classList.remove("sel");}
+  });
+  renderUnitMap();
+}
+function renderUnitMap(){
+  const wrap=document.getElementById("unitMapWrap");
+  if(!wrap)return;
+  wrap.innerHTML=(UNITS[tmpAnaSubject]||[]).map(u=>{
+    const recs=data.records.filter(r=>r.subject===tmpAnaSubject&&r.unit===u);
+    const avg=recs.length?recs.reduce((a,b)=>a+b.stars,0)/recs.length:null;
+    const bg=avg===null?"#f3f4f6":avg>=4?"#bbf7d0":avg>=3?"#fef08a":avg>=2?"#fed7aa":"#fecaca";
+    const tc=avg===null?"#9ca3af":avg>=4?"#166534":avg>=3?"#713f12":avg>=2?"#9a3412":"#991b1b";
+    return `<div class="unit-chip" style="background:${bg}">
+      <div class="unit-name" style="color:${tc}">${u}</div>
+      <div class="unit-score" style="color:${tc}">${avg!==null?"★"+avg.toFixed(1):"未記録"}</div>
+    </div>`;
+  }).join("");
+}
+
+// ── HELP ──────────────────────────────────────────────────────────
+function setSettingCpr(v) {
+  if (!data.settings) data.settings = {coinsPerRecord:5, testBonus:true, testBonusRate:1.5};
+  const old = data.settings.coinsPerRecord || 5;
+  if (v === old) return;
+  // Show retroactive dialog
+  pendingCpr = v;
+  document.getElementById("cprDialogMsg").textContent = `1回あたりのコインを ${old}円 → ${v}円 に変えるよ！`;
+  document.getElementById("cprDialog").style.display = "flex";
+}
+function applyCprChange(retro) {
+  const v = pendingCpr;
+  const old = data.settings.coinsPerRecord || 5;
+  data.settings.coinsPerRecord = v;
+  if (retro) {
+    // Recalculate this month's coins: replace old cpr entries with new cpr
+    const m = thisMonth();
+    if (data.monthlyCoins[m]) {
+      let diff = 0;
+      data.monthlyCoins[m].log.forEach(entry => {
+        // Only regular study records (not test records which have score in reason)
+        if (!entry.reason.includes("テスト記録") && entry.amount === old) {
+          diff += (v - old);
+          entry.amount = v;
+        }
+      });
+      data.monthlyCoins[m].earned += diff;
+      data.allTimeCoins += diff;
+    }
+    showToast(`今月分もまとめて ${v}円に変更したよ！`);
+  } else {
+    showToast(`今から ${v}円に設定したよ！`);
+  }
+  saveData();
+  document.getElementById("cprDialog").style.display = "none";
+  switchTab("help");
+}
+function setSettingTb(v) {
+  if (!data.settings) data.settings = {coinsPerRecord:5, testBonus:true, testBonusRate:1.5};
+  data.settings.testBonus = v;
+  saveData();
+  showToast(v ? "テストボーナスをONにしたよ！" : "テストボーナスをOFFにしたよ！");
+  switchTab("help");
+}
+function setSettingRate(v) {
+  if (!data.settings) data.settings = {coinsPerRecord:5, testBonus:true, testBonusRate:1.5};
+  const oldRate = data.settings.testBonusRate || 1.5;
+  if (v === oldRate) return;
+  pendingRate = v;
+  document.getElementById("rateDialogMsg").textContent = `テストボーナス倍率を ${oldRate}倍 → ${v}倍 に変えるよ！`;
+  document.getElementById("rateDialog").style.display = "flex";
+}
+function applyRateChange(retro) {
+  const v = pendingRate;
+  const oldRate = data.settings.testBonusRate || 1.5;
+  data.settings.testBonusRate = v;
+  if (retro) {
+    const m = thisMonth();
+    if (data.monthlyCoins[m]) {
+      let diff = 0;
+      // Find test records this month and recalculate their bonus portion
+      const cpr = data.settings.coinsPerRecord || 5;
+      data.tests.filter(t => t.date && t.date.slice(0,7) === m).forEach(t => {
+        const oldCoins = cpr + Math.round(t.score * oldRate / 10);
+        const newCoins = cpr + Math.round(t.score * v / 10);
+        // Find matching log entry
+        const logEntry = data.monthlyCoins[m].log.find(e =>
+          e.reason.includes(t.name) && e.reason.includes('テスト記録') && e.amount === oldCoins
+        );
+        if (logEntry) {
+          diff += (newCoins - oldCoins);
+          logEntry.amount = newCoins;
+        }
+      });
+      data.monthlyCoins[m].earned += diff;
+      data.allTimeCoins += diff;
+    }
+    showToast(`今月のテスト記録も ${v}倍に更新したよ！`);
+  } else {
+    showToast(`次のテストから ${v}倍に設定したよ！`);
+  }
+  saveData();
+  document.getElementById("rateDialog").style.display = "none";
+  switchTab("help");
+}
+
+function renderHelp() {
+  if (!data.settings) data.settings = {coinsPerRecord:5, testBonus:true, testBonusRate:1.5};
+  const cpr = data.settings.coinsPerRecord || 5;
+  const tb = data.settings.testBonus !== false;
+  const rate = data.settings.testBonusRate || 1.5;
+  return `
+  <div class="card" style="background:linear-gradient(135deg,#fff0f6,#fff8f0);border:2px solid #ffd0e8">
+    <div style="font-size:32px;text-align:center;margin-bottom:8px">⚙️</div>
+    <div style="font-weight:700;color:#ff6b9d;font-size:17px;text-align:center;margin-bottom:4px">設定</div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#ff6b9d;font-size:14px;margin-bottom:10px">🪙 1回記録したらもらえる金額</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+      ${[1,3,5,10,20,50].map(v=>'<button onclick="setSettingCpr('+v+')" style="padding:8px 16px;border-radius:12px;border:2px solid '+(cpr===v?'#ff6b9d':'#eee')+';background:'+(cpr===v?'#fff0f6':'white')+';color:'+(cpr===v?'#ff6b9d':'#aaa')+';font-weight:700;cursor:pointer;font-family:inherit;font-size:14px">'+v+'円</button>').join('')}
+    </div>
+    <div style="font-size:11px;color:#aaa">テストの記録はこの金額＋点数ボーナス</div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#ff6b9d;font-size:14px;margin-bottom:10px">📝 テストのボーナス</div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:8px">点数×倍率÷10 円がボーナスとして加算されます</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button onclick="setSettingTb(true)" style="flex:1;padding:10px;border-radius:12px;border:2px solid '+(tb?'#3b82f6':'#eee')+';background:'+(tb?'#eff6ff':'white')+';color:'+(tb?'#3b82f6':'#aaa')+';font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">あり</button>
+      <button onclick="setSettingTb(false)" style="flex:1;padding:10px;border-radius:12px;border:2px solid '+(!tb?'#3b82f6':'#eee')+';background:'+(!tb?'#eff6ff':'white')+';color:'+(!tb?'#3b82f6':'#aaa')+';font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">なし</button>
+    </div>
+    ${tb ? `
+    <div style="font-weight:700;color:#6366f1;font-size:13px;margin-bottom:8px">📐 ボーナス倍率</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${[1.0,1.5,2.0,3.0].map(r=>'<button onclick="setSettingRate('+r+')" style="padding:8px 14px;border-radius:12px;border:2px solid '+(rate===r?'#6366f1':'#eee')+';background:'+(rate===r?'#eef2ff':'white')+';color:'+(rate===r?'#6366f1':'#aaa')+';font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">'+r+'倍</button>').join('')}
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-top:8px">例）80点 × ${rate}倍 ÷ 10 = ${Math.round(80*rate/10)}円ボーナス</div>
+    ` : ''}
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg,#fff0f6,#fff8f0);border:2px solid #ffd0e8">
+    <div style="font-size:24px;text-align:center;margin-bottom:8px">📖</div>
+    <div style="font-weight:700;color:#ff6b9d;font-size:17px;text-align:center;margin-bottom:4px">使い方ガイド</div>
+    <div style="font-size:12px;color:#aaa;text-align:center">保護者の方へ</div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#ff6b9d;font-size:14px;margin-bottom:12px">🏠 ホーム画面</div>
+    <div style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px">娘さんが毎日記録する画面です。教科・単元・スタンプ・気分・星を入力して「記録する」ボタンを押すとコインがもらえます。</div>
+    <div style="background:#f9f9f9;border-radius:12px;padding:12px;font-size:12px;color:#888">
+      <div style="margin-bottom:4px">📚 <strong>教科</strong>→ 算数・国語・理科・社会・英語・公文</div>
+      <div style="margin-bottom:4px">📝 <strong>単元</strong>→ 今日やった内容（分数、漢字など）</div>
+      <div style="margin-bottom:4px">💡 <strong>スタンプ</strong>→ わかった！むずかし など気持ちを選ぶ</div>
+      <div style="margin-bottom:4px">😊 <strong>気分</strong>→ 5段階で今日の気分を選ぶ</div>
+      <div>⭐ <strong>星</strong>→ どのくらいできたか自己評価（1〜5）</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#f59e0b;font-size:14px;margin-bottom:12px">🪙 おこづかい画面</div>
+    <div style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px">記録するたびにコインが貯まります。月末にコインの合計分のお小遣いを渡してあげてください。</div>
+    <div style="background:#fffbeb;border-radius:12px;padding:12px;font-size:12px;color:#92400e">
+      <div style="margin-bottom:4px">🪙 記録1回 → 設定した金額（初期値：5円）</div>
+      <div style="margin-bottom:4px">📝 テスト記録 → 設定金額＋点数÷10円</div>
+      <div style="margin-bottom:4px">🔄 おこづかいは<strong>毎月リセット</strong>されます</div>
+      <div>🐲 キャラクターは累計コインで成長します</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#3b82f6;font-size:14px;margin-bottom:12px">📝 テスト画面</div>
+    <div style="font-size:13px;color:#555;line-height:1.8">テストや検定の点数を記録します。教科・テスト名・点数・日付を入力してください。点数に応じてボーナスコインがもらえます。</div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#22c55e;font-size:14px;margin-bottom:12px">📊 ぶんせき画面</div>
+    <div style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px">記録が3件以上になるとグラフが見られます。</div>
+    <div style="background:#f0fdf4;border-radius:12px;padding:12px;font-size:12px;color:#166534">
+      <div style="margin-bottom:4px">🕸️ <strong>レーダーチャート</strong>→ 教科バランスを確認</div>
+      <div style="margin-bottom:4px">🔍 <strong>苦手マップ</strong>→ 単元ごとの得意・苦手を色で確認</div>
+      <div>🟢 得意　🟡 ふつう　🟠 あと少し　🔴 要フォロー</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#888;font-size:14px;margin-bottom:12px">⚙️ 設定（ヘッダー右上）</div>
+    <div style="font-size:13px;color:#555;line-height:1.8">1回あたりのコイン金額とテストボーナスのON/OFFを設定できます。</div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#3b82f6;font-size:14px;margin-bottom:12px">☁️ クラウド保存について</div>
+    <div style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px">記録するたびに自動でGoogleスプレッドシートに保存されます。ヘッダーの☁️ボタンをタップするとクラウドから最新データを読み込めます。</div>
+    <div style="background:#eff6ff;border-radius:12px;padding:12px;font-size:12px;color:#1e40af">
+      <div style="margin-bottom:4px">✅ アプリを閉じてもデータは消えません</div>
+      <div style="margin-bottom:4px">✅ 機種変更してもJSONで引き継げます</div>
+      <div>💾 ホーム画面下の「JSONで書き出し」で定期的にバックアップを取ることをおすすめします</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;color:#ff6b9d;font-size:14px;margin-bottom:12px">🌸 おすすめの関わり方</div>
+    <div style="font-size:13px;color:#555;line-height:1.9">
+      <div style="padding:8px 0;border-bottom:1px solid #faf0f5"><strong>毎日</strong>　「今日の記録した？」と一声かける</div>
+      <div style="padding:8px 0;border-bottom:1px solid #faf0f5"><strong>週1回</strong>　ぶんせき画面を一緒に見て具体的に褒める</div>
+      <div style="padding:8px 0;border-bottom:1px solid #faf0f5"><strong>月末</strong>　おこづかい画面でコインを確認してお金を渡す</div>
+      <div style="padding:8px 0"><strong>テスト後</strong>　一緒にテスト記録をつける</div>
+    </div>
+  </div>
+
+  <div class="card" style="background:#f9fafb;text-align:center">
+    <div style="font-size:24px;margin-bottom:6px">🏅</div>
+    <div style="font-size:12px;color:#aaa">バッジは記録を続けると自動でもらえます<br>娘さんの頑張りを一緒に喜んであげてください🌸</div>
+  </div>
+  `;
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+updateHeader();
+renderTab();
+// 起動時にクラウドから読み込む
+loadFromCloud();
+</script>
+</body>
+</html>
