@@ -81,6 +81,8 @@ select.inp{appearance:none;background:white url("data:image/svg+xml;utf8,<svg xm
 .tag-date{font-size:11px;color:#ddd;margin-left:auto;}
 .rec-note{font-size:13px;color:#555;}
 .rec-stars{font-size:12px;}
+.parent-comment{background:#eef2ff;border-radius:10px;padding:6px 10px;margin-top:6px;font-size:12px;color:#4338ca;line-height:1.5;}
+.comment-btn{margin-top:6px;padding:4px 10px;border-radius:10px;border:1px solid #e0e0ff;background:white;font-size:11px;color:#8b8bcc;cursor:pointer;font-family:inherit;}
 /* Piggy bank */
 .piggy-card{border-radius:24px;padding:20px;border:2px solid rgba(0,0,0,.05);}
 .piggy-inner{display:flex;align-items:center;gap:16px;}
@@ -208,22 +210,6 @@ select.inp{appearance:none;background:white url("data:image/svg+xml;utf8,<svg xm
   </div>
 </div>
 
-<!-- Password screen -->
-<div id="pwScreen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#ff6b9d,#ff8c61);z-index:9999;align-items:center;justify-content:center;padding:30px;">
-  <div style="background:white;border-radius:28px;padding:32px 24px;width:100%;max-width:360px;text-align:center;">
-    <div style="font-size:52px;margin-bottom:8px">🐣</div>
-    <div style="font-weight:700;font-size:20px;color:#ff6b9d;margin-bottom:4px">まなびノート</div>
-    <div style="font-size:13px;color:#aaa;margin-bottom:24px">パスワードを入力してね</div>
-    <input id="pwInput" type="password" placeholder="パスワード"
-      style="width:100%;border:2px solid #f0e0ff;border-radius:14px;padding:12px 16px;font-size:16px;font-family:inherit;outline:none;color:#555;text-align:center;margin-bottom:8px;">
-    <div id="pwError" style="color:#ef4444;font-size:12px;min-height:18px;margin-bottom:12px"></div>
-    <button id="pwBtn" onclick="submitPassword()"
-      style="width:100%;padding:14px;background:linear-gradient(135deg,#ff8c61,#ff6b9d);color:white;border:none;border-radius:16px;font-weight:700;font-size:16px;cursor:pointer;font-family:inherit;">
-      はじめる 🌸
-    </button>
-  </div>
-</div>
-
 <!-- Rate change retroactive dialog -->
 <div id="rateDialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;align-items:center;justify-content:center;padding:20px;">
   <div style="background:white;border-radius:24px;padding:24px;width:100%;max-width:360px;">
@@ -260,14 +246,64 @@ select.inp{appearance:none;background:white url("data:image/svg+xml;utf8,<svg xm
   </div>
 </div>
 
+<!-- Parent comment modal -->
+<div class="modal-bg" id="commentModal" style="display:none">
+  <div class="modal">
+    <div style="font-weight:700;font-size:18px;color:#6366f1;margin-bottom:6px">💬 保護者コメント</div>
+    <div id="commentContext" style="font-size:12px;color:#aaa;margin-bottom:12px"></div>
+    <textarea class="inp" id="commentInp" style="min-height:80px;margin-bottom:16px" placeholder="がんばったね！のひとことを書いてあげよう"></textarea>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeCommentModal()" style="flex:1;padding:12px;border:2px solid #eee;border-radius:14px;background:white;color:#aaa;font-weight:700;cursor:pointer;font-family:inherit">キャンセル</button>
+      <button onclick="saveComment()" style="flex:2;padding:12px;border:none;border-radius:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px">💾 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit record modal -->
+<div class="modal-bg" id="editRecordModal" style="display:none">
+  <div class="modal">
+    <div style="font-weight:700;font-size:18px;color:#ff6b9d;margin-bottom:14px">✏️ 記録を編集</div>
+    <div style="margin-bottom:10px">
+      <div class="lbl">教科・習い事</div>
+      <select class="inp" id="editSubjectSel" onchange="onEditSubjectChange()"></select>
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="lbl">単元</div>
+      <select class="inp" id="editUnitSel"></select>
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="lbl">日付</div>
+      <input class="inp" id="editDateInp" type="date">
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="lbl">メモ</div>
+      <textarea class="inp" id="editNoteInp" style="min-height:70px"></textarea>
+    </div>
+    <div style="margin-bottom:16px">
+      <div class="lbl">できた？</div>
+      <div class="stars-row" id="editStarsRow"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeEditRecordModal()" style="flex:1;padding:12px;border:2px solid #eee;border-radius:14px;background:white;color:#aaa;font-weight:700;cursor:pointer;font-family:inherit">キャンセル</button>
+      <button onclick="saveEditRecord()" style="flex:2;padding:12px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff8c61,#ff6b9d);color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px">💾 保存する</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Constants ─────────────────────────────────────────────────────
 const KEY = "manabiStandalone1";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbw5p83peNltjRqxQr_2BfrgwGg9csdvXbEToi1j8IxDEesGqBjcWRGe1nP4H41uphuv/exec";
-let sessionToken = null; // パスワードのSHA-256ハッシュ（起動時に生成）
-const SUBJECTS = ["算数","国語","理科","社会","英語","公文"];
-const EMOJI = {算数:"🔢",国語:"📖",理科:"🔬",社会:"🌍",英語:"🌎",公文:"✏️"};
-const COLOR = {算数:"#f97316",国語:"#ec4899",理科:"#22c55e",社会:"#3b82f6",英語:"#a855f7",公文:"#f59e0b"};
+const GAS_TOKEN = "82b87b56b096bcf4be784d993717c10443d843ebc880e4dae7cd5d049240d451";
+const SCHOOL_SUBJECTS = ["算数","国語","理科","社会","英語","公文"];
+const LESSON_SUBJECTS = ["水泳","絵画","ピアノ","体操"];
+const SUBJECTS = [...SCHOOL_SUBJECTS, ...LESSON_SUBJECTS];
+const SUBJECT_GROUPS = [
+  {label:"📚 教科", subs:SCHOOL_SUBJECTS},
+  {label:"🎨 習い事", subs:LESSON_SUBJECTS},
+];
+const EMOJI = {算数:"🔢",国語:"📖",理科:"🔬",社会:"🌍",英語:"🌎",公文:"✏️",水泳:"🏊",絵画:"🎨",ピアノ:"🎹",体操:"🤸"};
+const COLOR = {算数:"#f97316",国語:"#ec4899",理科:"#22c55e",社会:"#3b82f6",英語:"#a855f7",公文:"#f59e0b",水泳:"#0ea5e9",絵画:"#eab308",ピアノ:"#8b5cf6",体操:"#14b8a6"};
 const UNITS = {
   算数:["たし算・ひき算","かけ算・わり算","分数","小数","図形","面積","速さ","文章題","その他"],
   国語:["漢字","読解（物語）","読解（説明文）","作文","文法","慣用句","その他"],
@@ -275,6 +311,10 @@ const UNITS = {
   社会:["地理","歴史","公民","地図","産業","その他"],
   英語:["単語","リスニング","スピーキング","読み書き","文法","その他"],
   公文:["計算","文章題","英語","その他"],
+  水泳:["クロール","背泳ぎ","平泳ぎ","バタフライ","記録会","その他"],
+  絵画:["デッサン","水彩","色えんぴつ","コンクール作品","その他"],
+  ピアノ:["基礎練習","練習曲","発表会準備","理論","その他"],
+  体操:["マット運動","跳び箱","鉄棒","柔軟","発表会準備","その他"],
 };
 const STAMPS = [
   {id:"wakatta",e:"💡",l:"わかった！"},
@@ -298,7 +338,8 @@ const BADGES = [
   {id:"first",   e:"🌱",l:"はじめての記録", check:(r)=>r.length>=1},
   {id:"streak7", e:"🔥",l:"7日連続！",      check:(r)=>calcStreak(r)>=7},
   {id:"rec30",   e:"🏆",l:"30回記録！",     check:(r)=>r.length>=30},
-  {id:"allsub",  e:"🌈",l:"全教科制覇！",   check:(r)=>new Set(r.map(x=>x.subject)).size>=6},
+  {id:"allsub",  e:"🌈",l:"全教科制覇！",   check:(r)=>{const s=new Set(r.map(x=>x.subject));return SCHOOL_SUBJECTS.every(sub=>s.has(sub));}},
+  {id:"alllesson",e:"🎪",l:"習い事フル出場！",check:(r)=>{const s=new Set(r.map(x=>x.subject));return LESSON_SUBJECTS.every(sub=>s.has(sub));}},
   {id:"test10",  e:"📝",l:"テスト10回！",   check:(_,t)=>t.length>=10},
   {id:"coin500", e:"💰",l:"500円貯めた！",  check:(_,_2,c)=>c>=500},
   {id:"coin1000",e:"👛",l:"1000円貯めた！", check:(_,_2,c)=>c>=1000},
@@ -313,6 +354,8 @@ let tmpStamps = [];
 let tmpMood = 3;
 let tmpStars = 3;
 let tmpNote = "";
+let tmpDate = today();
+let commentTargetId = null;
 let tmpTSubject = "算数";
 let tmpAnaSubject = "算数";
 let settingsCpr = 5;
@@ -347,7 +390,7 @@ function syncToCloud() {
       const res = await fetch(GAS_URL, {
         method: "POST",
         headers: {"Content-Type":"text/plain"},
-        body: JSON.stringify({action:"save", token: sessionToken, data})
+        body: JSON.stringify({action:"save", token: GAS_TOKEN, data})
       });
       const json = await res.json();
       if (json.ok) setSyncStatus("ok");
@@ -359,7 +402,7 @@ function syncToCloud() {
 async function loadFromCloud() {
   setSyncStatus("syncing");
   try {
-    const res = await fetch(GAS_URL + "?t=" + Date.now() + "&token=" + encodeURIComponent(sessionToken||""));
+    const res = await fetch(GAS_URL + "?token=" + encodeURIComponent(GAS_TOKEN) + "&t=" + Date.now());
     const json = await res.json();
     if (json.ok && json.data) {
       data = migrate(json.data);
@@ -368,9 +411,12 @@ async function loadFromCloud() {
       updateHeader();
       renderTab();
       showToast("クラウドからデータを読み込んだよ！☁️");
-    } else {
+    } else if (json.ok) {
       setSyncStatus("ok");
       showToast("クラウドにデータがまだないよ。記録を始めよう！");
+    } else {
+      setSyncStatus("error");
+      showToast("クラウドの認証に失敗したよ。GAS_TOKENの設定を確認してね。");
     }
   } catch {
     setSyncStatus("error");
@@ -401,6 +447,22 @@ function migrate(d) {
   if (!d.settings) d.settings = {coinsPerRecord:5,testBonus:true,testBonusRate:1.5};
   if (d.settings.testBonusRate===undefined) d.settings.testBonusRate=1.5;
   return d;
+}
+
+// ── Subject pill groups ──────────────────────────────────────────
+function renderGroupedPills(selectedVal, idPrefix, onclickName) {
+  return SUBJECT_GROUPS.map((g,i)=>`
+    <div style="font-size:10px;color:#ccc;font-weight:700;margin:${i===0?'0':'10px'} 0 4px">${g.label}</div>
+    <div class="pills">${g.subs.map(s=>`<button class="pill" id="${idPrefix}_${s}" onclick="${onclickName}('${s}')" style="${s===selectedVal?'border-color:'+COLOR[s]+';background:'+COLOR[s]+'18;color:'+COLOR[s]:''}">${EMOJI[s]} ${s}</button>`).join("")}</div>
+  `).join("");
+}
+function updateGroupedPillSelection(idPrefix, s) {
+  SUBJECTS.forEach(sub=>{
+    const b=document.getElementById(idPrefix+"_"+sub);
+    if(!b)return;
+    if(sub===s){b.style.cssText=`border-color:${COLOR[s]};background:${COLOR[s]}18;color:${COLOR[s]}`;b.classList.add("sel");}
+    else{b.style.cssText="";b.classList.remove("sel");}
+  });
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -484,16 +546,101 @@ function checkBadges() {
 // ── Record submit ─────────────────────────────────────────────────
 function submitRecord() {
   if (!tmpNote.trim()) { showToast("一言でいいので書いてね！"); return; }
-  const rec={id:Date.now(),date:today(),subject:tmpSubject,unit:tmpUnit,note:tmpNote,mood:tmpMood,stars:tmpStars,stamps:[...tmpStamps]};
+  const rec={id:Date.now(),date:tmpDate||today(),subject:tmpSubject,unit:tmpUnit,note:tmpNote,mood:tmpMood,stars:tmpStars,stamps:[...tmpStamps]};
   data.records.unshift(rec);
+  data.records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
   checkBadges();
   const coins = data.settings.coinsPerRecord;
   awardCoins(coins,`${tmpSubject}・${tmpUnit}の記録`);
-  tmpNote=""; tmpMood=3; tmpStars=3; tmpStamps=[];
+  tmpNote=""; tmpMood=3; tmpStars=3; tmpStamps=[]; tmpDate=today();
   saveData();
   showToast(`記録したよ！🌸 +${coins}円！`);
   updateHeader();
   switchTab("home");
+}
+
+// ── Parent comment ────────────────────────────────────────────────
+function openCommentModal(id) {
+  const r = data.records.find(x=>x.id===id);
+  if (!r) return;
+  commentTargetId = id;
+  document.getElementById("commentContext").textContent = `${fmtDate(r.date)} ${EMOJI[r.subject]||""} ${r.subject}${r.unit?"・"+r.unit:""}`;
+  document.getElementById("commentInp").value = r.parentComment || "";
+  document.getElementById("commentModal").style.display = "flex";
+}
+function closeCommentModal() {
+  document.getElementById("commentModal").style.display = "none";
+  commentTargetId = null;
+}
+function saveComment() {
+  const r = data.records.find(x=>x.id===commentTargetId);
+  if (!r) { closeCommentModal(); return; }
+  const val = document.getElementById("commentInp").value.trim();
+  if (val) r.parentComment = val; else delete r.parentComment;
+  saveData();
+  closeCommentModal();
+  showToast("コメントを保存したよ！💬");
+  renderTab();
+}
+
+// ── Edit / delete record ─────────────────────────────────────────
+let editTargetId = null;
+let editStars = 3;
+function openEditRecord(id) {
+  const r = data.records.find(x=>x.id===id);
+  if (!r) return;
+  editTargetId = id;
+  editStars = r.stars || 0;
+  const sel = document.getElementById("editSubjectSel");
+  sel.innerHTML = SUBJECT_GROUPS.map(g=>`<optgroup label="${g.label}">${g.subs.map(s=>`<option value="${s}"${s===r.subject?" selected":""}>${EMOJI[s]} ${s}</option>`).join("")}</optgroup>`).join("");
+  fillEditUnits(r.subject, r.unit);
+  const dateInp = document.getElementById("editDateInp");
+  dateInp.max = today();
+  dateInp.value = r.date;
+  document.getElementById("editNoteInp").value = r.note || "";
+  renderEditStars();
+  document.getElementById("editRecordModal").style.display = "flex";
+}
+function fillEditUnits(subject, selectedUnit) {
+  const usel = document.getElementById("editUnitSel");
+  usel.innerHTML = (UNITS[subject]||[]).map(u=>`<option${u===selectedUnit?" selected":""}>${u}</option>`).join("");
+}
+function onEditSubjectChange() {
+  const s = document.getElementById("editSubjectSel").value;
+  fillEditUnits(s, (UNITS[s]||[])[0]);
+}
+function renderEditStars() {
+  document.getElementById("editStarsRow").innerHTML = [1,2,3,4,5].map(s=>`<span class="star${s<=editStars?" lit":""}${s===editStars?" big":""}" onclick="selEditStars(${s})">⭐</span>`).join("");
+}
+function selEditStars(s) { editStars = s; renderEditStars(); }
+function closeEditRecordModal() {
+  document.getElementById("editRecordModal").style.display = "none";
+  editTargetId = null;
+}
+function saveEditRecord() {
+  const r = data.records.find(x=>x.id===editTargetId);
+  if (!r) { closeEditRecordModal(); return; }
+  const note = document.getElementById("editNoteInp").value.trim();
+  if (!note) { showToast("一言でいいので書いてね！"); return; }
+  r.subject = document.getElementById("editSubjectSel").value;
+  r.unit = document.getElementById("editUnitSel").value;
+  r.date = document.getElementById("editDateInp").value || r.date;
+  r.note = note;
+  r.stars = editStars;
+  data.records.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  saveData();
+  closeEditRecordModal();
+  showToast("記録を更新したよ！✏️");
+  renderTab();
+  updateHeader();
+}
+function deleteRecord(id) {
+  if (!confirm("この記録を削除する？元に戻せないよ")) return;
+  data.records = data.records.filter(r=>r.id!==id);
+  saveData();
+  showToast("記録を削除したよ");
+  renderTab();
+  updateHeader();
 }
 
 // ── Test submit ───────────────────────────────────────────────────
@@ -610,12 +757,13 @@ function renderTab() {
   else if (currentTab==="test") el.innerHTML=renderTest();
   else if (currentTab==="analysis") el.innerHTML=renderAnalysis();
   else if (currentTab==="help") el.innerHTML=renderHelp();
+  else if (currentTab==="history") el.innerHTML=renderHistory();
   postRender();
 }
 
 function postRender() {
   if (currentTab==="analysis" && data.records.length>=3) renderRadar();
-  if (currentTab==="analysis") renderSubjBars();
+  if (currentTab==="analysis") { renderSubjBars(); renderLessonStats(); }
 }
 
 // ── HOME ──────────────────────────────────────────────────────────
@@ -639,18 +787,25 @@ function renderHome() {
     </div>
   </div>
 
+  ${renderWeeklySummary()}
+
   <div class="card">
     <div style="font-weight:700;color:#ff6b9d;font-size:14px;margin-bottom:3px">✏️ 今日のがんばりを記録</div>
     <div style="font-size:11px;color:#aaa;margin-bottom:12px">記録するたびに 🪙 +${coins}円もらえるよ！</div>
 
     <div style="margin-bottom:10px">
-      <div class="lbl">教科</div>
-      <div class="pills">${SUBJECTS.map(s=>`<button class="pill" id="subj_${s}" onclick="selSubject('${s}')" style="${s===tmpSubject?'border-color:'+COLOR[s]+';background:'+COLOR[s]+'18;color:'+COLOR[s]:''}">${EMOJI[s]} ${s}</button>`).join("")}</div>
+      <div class="lbl">教科・習い事</div>
+      ${renderGroupedPills(tmpSubject,"subj","selSubject")}
     </div>
 
     <div style="margin-bottom:10px">
       <div class="lbl">単元</div>
       <select class="inp" id="unitSel" onchange="tmpUnit=this.value">${(UNITS[tmpSubject]||[]).map(u=>`<option${u===tmpUnit?" selected":""}>${u}</option>`).join("")}</select>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div class="lbl">記録する日</div>
+      <input class="inp" id="recDateInp" type="date" max="${today()}" value="${tmpDate}" onchange="tmpDate=this.value||today()">
     </div>
 
     <div style="margin-bottom:10px">
@@ -675,18 +830,11 @@ function renderHome() {
 
   ${data.records.length>0?`
   <div class="card">
-    <div class="sec-title">📋 最近の記録</div>
-    ${data.records.slice(0,5).map(r=>`
-    <div class="rec-item" style="border-color:${COLOR[r.subject]}">
-      <div class="rec-tags">
-        <span class="tag" style="background:${COLOR[r.subject]}20;color:${COLOR[r.subject]}">${r.subject}</span>
-        ${r.unit&&r.unit!=="その他"?`<span class="tag-sub">${r.unit}</span>`:""}
-        ${(r.stamps||[]).map(sid=>{const s=STAMPS.find(x=>x.id===sid);return s?`<span style="font-size:13px">${s.e}</span>`:""}).join("")}
-        <span class="tag-date">${fmtDate(r.date)}</span>
-      </div>
-      ${r.note?`<div class="rec-note">${r.note}</div>`:""}
-      <div class="rec-stars">${"⭐".repeat(r.stars||0)}</div>
-    </div>`).join("")}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="sec-title" style="margin-bottom:0">📋 最近の記録</div>
+      ${data.records.length>5?`<button onclick="switchTab('history')" style="padding:5px 12px;border-radius:12px;border:2px solid #ffd0e8;background:#fff0f6;color:#ff6b9d;font-weight:700;font-size:11px;cursor:pointer;font-family:inherit">すべて見る（${data.records.length}件）</button>`:""}
+    </div>
+    ${data.records.slice(0,5).map(renderRecordItem).join("")}
   </div>`:""}
 
   <div class="card data-card">
@@ -703,14 +851,61 @@ function renderHome() {
   `;
 }
 
+// ── Record item (shared by home & history) ──────────────────────────
+function renderRecordItem(r) {
+  return `
+    <div class="rec-item" style="border-color:${COLOR[r.subject]}">
+      <div class="rec-tags">
+        <span class="tag" style="background:${COLOR[r.subject]}20;color:${COLOR[r.subject]}">${r.subject}</span>
+        ${r.unit&&r.unit!=="その他"?`<span class="tag-sub">${r.unit}</span>`:""}
+        ${(r.stamps||[]).map(sid=>{const s=STAMPS.find(x=>x.id===sid);return s?`<span style="font-size:13px">${s.e}</span>`:""}).join("")}
+        <span class="tag-date">${fmtDate(r.date)}</span>
+      </div>
+      ${r.note?`<div class="rec-note">${r.note}</div>`:""}
+      <div class="rec-stars">${"⭐".repeat(r.stars||0)}</div>
+      ${r.parentComment?`<div class="parent-comment">👩‍👧 ${r.parentComment}</div>`:""}
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+        <button class="comment-btn" onclick="openCommentModal(${r.id})">${r.parentComment?"💬 コメントを編集":"💬 コメントを書く"}</button>
+        <button class="comment-btn" onclick="openEditRecord(${r.id})">✏️ 編集</button>
+        <button class="comment-btn" onclick="deleteRecord(${r.id})" style="color:#ef4444;border-color:#fecaca">🗑️ 削除</button>
+      </div>
+    </div>`;
+}
+
+// ── Weekly summary ────────────────────────────────────────────────
+function renderWeeklySummary() {
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-6);
+  const cutoffStr = cutoff.toISOString().split("T")[0];
+  const weekRecs = data.records.filter(r=>r.date>=cutoffStr);
+  if (!weekRecs.length) return "";
+  const bySubj = {};
+  weekRecs.forEach(r=>{ bySubj[r.subject]=(bySubj[r.subject]||0)+1; });
+  const parts = Object.entries(bySubj).sort((a,b)=>b[1]-a[1]).map(([s,c])=>`${EMOJI[s]}${s}×${c}`).join("　");
+  return `
+  <div class="card" style="background:linear-gradient(135deg,#eef2ff,#fdf4ff);border:2px solid #e0d4ff">
+    <div style="font-weight:700;color:#6366f1;font-size:14px;margin-bottom:4px">🗓️ 今週のがんばり</div>
+    <div style="font-size:22px;font-weight:700;color:#6366f1">${weekRecs.length}回<span style="font-size:12px;color:#a855f7;font-weight:400"> 記録したよ！</span></div>
+    <div style="font-size:12px;color:#888;margin-top:6px">${parts}</div>
+  </div>`;
+}
+
+// ── History (all records) ────────────────────────────────────────
+function renderHistory() {
+  return `
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="sec-title" style="margin-bottom:0">📚 すべての記録（${data.records.length}件）</div>
+      <button onclick="switchTab('home')" style="padding:5px 12px;border-radius:12px;border:2px solid #eee;background:white;color:#888;font-weight:700;font-size:11px;cursor:pointer;font-family:inherit">← ホームへ</button>
+    </div>
+  </div>
+  <div class="card">
+    ${data.records.length===0?`<div style="text-align:center;color:#ccc;padding:20px;font-size:13px">まだ記録がないよ</div>`:data.records.map(renderRecordItem).join("")}
+  </div>`;
+}
+
 function selSubject(s) {
   tmpSubject=s; tmpUnit=UNITS[s][0];
-  SUBJECTS.forEach(sub=>{
-    const b=document.getElementById("subj_"+sub);
-    if(!b)return;
-    if(sub===s){b.style.cssText=`border-color:${COLOR[s]};background:${COLOR[s]}18;color:${COLOR[s]}`;b.classList.add("sel");}
-    else{b.style.cssText="";b.classList.remove("sel");}
-  });
+  updateGroupedPillSelection("subj", s);
   const sel=document.getElementById("unitSel");
   if(sel){sel.innerHTML=(UNITS[s]||[]).map(u=>`<option>${u}</option>`).join("");sel.value=tmpUnit;}
 }
@@ -855,17 +1050,17 @@ function renderTest() {
   const bonus = data.settings.testBonus;
   return `
   <button onclick="toggleTestForm()" style="width:100%;padding:13px;background:${showTestForm?"#f3f4f6":"linear-gradient(135deg,#3b82f6,#6366f1)"};color:${showTestForm?"#888":"white"};border:none;border-radius:16px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;margin-bottom:14px">
-    ${showTestForm?"✕ とじる":"📝 テスト・検定を記録する"}
+    ${showTestForm?"✕ とじる":"📝 テスト・コンテストを記録する"}
   </button>
 
   ${showTestForm?`
   <div class="card" style="border-top:4px solid #3b82f6">
     <div style="font-size:11px;color:#3b82f6;font-weight:700;margin-bottom:12px">記録で +${data.settings.coinsPerRecord}円${bonus?" ＋点数ボーナスも！":""}🪙</div>
     <div style="margin-bottom:10px">
-      <div class="lbl">教科</div>
-      <div class="pills">${SUBJECTS.map(s=>`<button class="pill" id="tsubj_${s}" onclick="selTSubject('${s}')" style="${s===tmpTSubject?'border-color:'+COLOR[s]+';background:'+COLOR[s]+'18;color:'+COLOR[s]:''}">${EMOJI[s]} ${s}</button>`).join("")}</div>
+      <div class="lbl">教科・習い事</div>
+      ${renderGroupedPills(tmpTSubject,"tsubj","selTSubject")}
     </div>
-    <input class="inp" id="tName" placeholder="テスト名（例：算数検定6級）" style="margin-bottom:10px">
+    <input class="inp" id="tName" placeholder="テスト・コンテスト名（例：算数検定6級、水泳記録会など）" style="margin-bottom:10px">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div><div class="lbl">点数</div><input class="inp" id="tScore" type="number" min="0" max="100" placeholder="85" oninput="updateTestBonus()"></div>
       <div><div class="lbl">受けた日</div><input class="inp" id="tDate" type="date" value="${today()}"></div>
@@ -898,12 +1093,7 @@ function renderTest() {
 function toggleTestForm(){showTestForm=!showTestForm;renderTab();}
 function selTSubject(s){
   tmpTSubject=s;
-  SUBJECTS.forEach(sub=>{
-    const b=document.getElementById("tsubj_"+sub);
-    if(!b)return;
-    if(sub===s){b.style.cssText=`border-color:${COLOR[s]};background:${COLOR[s]}18;color:${COLOR[s]}`;b.classList.add("sel");}
-    else{b.style.cssText="";b.classList.remove("sel");}
-  });
+  updateGroupedPillSelection("tsubj", s);
 }
 function updateTestBonus(){
   const sc=parseInt(document.getElementById("tScore")?.value);
@@ -931,10 +1121,12 @@ function renderAnalysis() {
     <div id="subjBarsWrap"></div>
   </div>
   <div class="card">
+    <div class="sec-title">🎨 習い事のようす</div>
+    <div id="lessonStatsWrap"></div>
+  </div>
+  <div class="card">
     <div class="sec-title">🔍 単元別の苦手マップ</div>
-    <div class="pills" style="margin-bottom:10px">
-      ${SUBJECTS.map(s=>`<button class="pill" id="ana_${s}" onclick="selAnaSubject('${s}')" style="${s===tmpAnaSubject?'border-color:'+COLOR[s]+';background:'+COLOR[s]+'18;color:'+COLOR[s]:''}">${EMOJI[s]} ${s}</button>`).join("")}
-    </div>
+    ${renderGroupedPills(tmpAnaSubject,"ana","selAnaSubject")}
     <div style="font-size:11px;color:#aaa;margin-bottom:6px">🟢 得意　🟡 ふつう　🟠 あと少し　🔴 要フォロー</div>
     <div class="unit-map" id="unitMapWrap"></div>
   </div>
@@ -944,16 +1136,37 @@ function renderAnalysis() {
 function renderRadar(){
   const canvas=document.getElementById("radarCanvas");
   if(!canvas)return;
-  const radarData=SUBJECTS.map(s=>{
+  const radarData=SCHOOL_SUBJECTS.map(s=>{
     const recs=data.records.filter(r=>r.subject===s);
     const avg=recs.length?recs.reduce((a,b)=>a+b.stars,0)/recs.length:0;
     return Math.round(avg*20);
   });
   radarChart=new Chart(canvas,{
     type:"radar",
-    data:{labels:SUBJECTS,datasets:[{data:radarData,backgroundColor:"rgba(255,107,157,0.2)",borderColor:"#ff6b9d",borderWidth:2,pointBackgroundColor:"#ff6b9d",pointRadius:4}]},
+    data:{labels:SCHOOL_SUBJECTS,datasets:[{data:radarData,backgroundColor:"rgba(255,107,157,0.2)",borderColor:"#ff6b9d",borderWidth:2,pointBackgroundColor:"#ff6b9d",pointRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:"#f0e0ff"},pointLabels:{font:{size:12,family:"Zen Maru Gothic"},color:"#888"}}},plugins:{legend:{display:false}}}
   });
+}
+
+function renderLessonStats(){
+  const wrap=document.getElementById("lessonStatsWrap");
+  if(!wrap)return;
+  const withRecs=LESSON_SUBJECTS.map(s=>{
+    const recs=data.records.filter(r=>r.subject===s);
+    const avg=recs.length?recs.reduce((a,b)=>a+b.stars,0)/recs.length:0;
+    return {s,count:recs.length,avg};
+  }).filter(x=>x.count>0);
+  if(!withRecs.length){
+    wrap.innerHTML=`<div style="font-size:12px;color:#ccc;text-align:center;padding:8px">まだ習い事の記録がないよ。ホームから記録してみよう！</div>`;
+    return;
+  }
+  const maxCount=Math.max(...withRecs.map(x=>x.count),1);
+  wrap.innerHTML=withRecs.map(({s,count,avg})=>`
+    <div class="subj-bar-row">
+      <span class="subj-bar-name" style="color:${COLOR[s]}">${EMOJI[s]} ${s}</span>
+      <div class="subj-bar-track"><div class="subj-bar-fill" style="width:${Math.round(count/maxCount*100)}%;background:${COLOR[s]}"></div></div>
+      <span class="subj-bar-val" style="color:${COLOR[s]};width:64px">${count}回 ★${avg.toFixed(1)}</span>
+    </div>`).join("");
 }
 
 function renderSubjBars(){
@@ -975,12 +1188,7 @@ function renderSubjBars(){
 
 function selAnaSubject(s){
   tmpAnaSubject=s;
-  SUBJECTS.forEach(sub=>{
-    const b=document.getElementById("ana_"+sub);
-    if(!b)return;
-    if(sub===s){b.style.cssText=`border-color:${COLOR[s]};background:${COLOR[s]}18;color:${COLOR[s]}`;b.classList.add("sel");}
-    else{b.style.cssText="";b.classList.remove("sel");}
-  });
+  updateGroupedPillSelection("ana", s);
   renderUnitMap();
 }
 function renderUnitMap(){
@@ -1195,55 +1403,11 @@ function renderHelp() {
   `;
 }
 
-// ── Password auth ────────────────────────────────────────────────
-async function sha256(text) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-async function submitPassword() {
-  const pw = document.getElementById("pwInput").value;
-  if (!pw) { document.getElementById("pwError").textContent = "パスワードを入力してね"; return; }
-  const hash = await sha256(pw);
-  // Try to verify by loading from cloud
-  document.getElementById("pwBtn").textContent = "確認中…";
-  document.getElementById("pwBtn").disabled = true;
-  document.getElementById("pwError").textContent = "";
-  try {
-    const res = await fetch(GAS_URL + "?t=" + Date.now() + "&token=" + encodeURIComponent(hash));
-    const json = await res.json();
-    if (json.ok) {
-      sessionToken = hash;
-      document.getElementById("pwScreen").style.display = "none";
-      if (json.data) {
-        data = migrate(json.data);
-        localStorage.setItem(KEY, JSON.stringify(data));
-      }
-      updateHeader();
-      renderTab();
-      setSyncStatus("ok");
-    } else {
-      document.getElementById("pwError").textContent = "パスワードが違うよ！";
-      document.getElementById("pwBtn").textContent = "はじめる";
-      document.getElementById("pwBtn").disabled = false;
-    }
-  } catch {
-    // Offline: allow access with saved local data
-    sessionToken = hash;
-    document.getElementById("pwScreen").style.display = "none";
-    updateHeader();
-    renderTab();
-    setSyncStatus("error");
-    showToast("オフラインで起動したよ。ローカルデータを使います。");
-  }
-}
-
 // ── Init ──────────────────────────────────────────────────────────
-// Show password screen on startup
-document.getElementById("pwScreen").style.display = "flex";
-document.getElementById("pwInput").addEventListener("keydown", e => {
-  if (e.key === "Enter") submitPassword();
-});
+updateHeader();
+renderTab();
+// 起動時にクラウドから読み込む
+loadFromCloud();
 </script>
 </body>
 </html>
