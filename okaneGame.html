@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="おかねの木">
+<meta name="robots" content="noindex,nofollow">
+<title>おかねの木そだてゲーム</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Zen Maru Gothic','Hiragino Maru Gothic Pro',sans-serif;background:#fff8f5;color:#444;min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:40px;}
+.hdr{background:linear-gradient(135deg,#34d399,#10b981 60%,#f59e0b);padding:20px 18px 16px;position:relative;overflow:hidden;color:#fff;}
+.hdr::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.12);}
+.hdr-title{font-weight:700;font-size:18px;}
+.hdr-sub{font-size:11px;opacity:.9;margin-top:2px;}
+.content{padding:14px 16px 0;}
+.card{background:#fff;border-radius:20px;padding:18px;box-shadow:0 3px 14px rgba(0,0,0,.07);margin-bottom:14px;}
+.sec-title{font-weight:700;font-size:15px;margin-bottom:10px;}
+.lbl{font-size:12px;color:#999;}
+.btn{width:100%;padding:14px;border:none;border-radius:16px;font-weight:700;font-size:16px;cursor:pointer;font-family:inherit;color:#fff;background:linear-gradient(135deg,#10b981,#34d399);box-shadow:0 4px 16px rgba(16,185,129,.3);}
+.btn.pink{background:linear-gradient(135deg,#ff8c61,#ff6b9d);box-shadow:0 4px 16px rgba(255,107,157,.3);}
+.btn.gray{background:#f1f1f1;color:#888;box-shadow:none;}
+.btn:disabled{opacity:.4;cursor:default;}
+.btn+.btn{margin-top:10px;}
+.menu-btn{display:flex;align-items:center;gap:14px;width:100%;padding:16px;border:2px solid #eef7f2;border-radius:18px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px;}
+.menu-btn .ic{font-size:34px;}
+.menu-btn b{display:block;font-size:15px;color:#333;}
+.menu-btn small{font-size:11px;color:#999;}
+.inp{width:100%;border:2px solid #d1fae5;border-radius:12px;padding:10px 12px;font-size:15px;font-family:inherit;outline:none;color:#555;}
+.chars{display:flex;gap:8px;margin-top:8px;}
+.char{flex:1;font-size:30px;padding:8px 0;border:2px solid #eee;border-radius:14px;background:#fff;cursor:pointer;}
+.char.sel{border-color:#10b981;background:#ecfdf5;}
+/* status bar */
+.stat-row{display:flex;gap:8px;}
+.stat{flex:1;background:#fff;border-radius:16px;padding:10px 6px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.stat .e{font-size:20px;}
+.stat .v{font-weight:700;font-size:14px;color:#333;margin-top:2px;}
+.stat .n{font-size:10px;color:#aaa;}
+/* tree */
+.tree-box{text-align:center;padding:6px 0 0;}
+.tree{font-size:72px;line-height:1;display:inline-block;transition:transform .4s;}
+.tree.grow{animation:grow .8s ease;}
+@keyframes grow{0%{transform:scale(.7)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.tree.shake{animation:shake .6s ease;}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
+.age-badge{display:inline-block;background:#ecfdf5;color:#059669;font-weight:700;border-radius:20px;padding:4px 12px;font-size:12px;}
+.progress{height:8px;background:#f1f5f9;border-radius:6px;overflow:hidden;margin-top:8px;}
+.progress>div{height:100%;background:linear-gradient(90deg,#34d399,#f59e0b);transition:width .4s;}
+/* allocation */
+.alloc{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f5f5f5;}
+.alloc:last-of-type{border-bottom:none;}
+.alloc .ic{font-size:28px;width:36px;text-align:center;}
+.alloc .t{flex:1;}
+.alloc .t b{font-size:14px;}
+.alloc .t small{display:block;font-size:10px;color:#aaa;line-height:1.4;}
+.stepper{display:flex;align-items:center;gap:6px;}
+.stepper button{width:34px;height:34px;border-radius:50%;border:none;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;background:#f1f5f9;color:#555;}
+.stepper .amt{min-width:58px;text-align:center;font-weight:700;font-size:14px;}
+.remain{text-align:center;font-size:13px;margin:10px 0;font-weight:700;}
+/* event card */
+.event{border:3px dashed #fcd34d;background:#fffbeb;}
+.event .big{font-size:44px;text-align:center;}
+.choice{display:block;width:100%;padding:13px;border-radius:14px;border:2px solid #e5e7eb;background:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;margin-top:8px;color:#444;text-align:left;}
+.lesson{background:#eff6ff;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.7;color:#1e3a8a;margin-top:12px;}
+.lesson b{color:#1d4ed8;}
+.result-line{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid #f5f5f5;}
+.up{color:#059669;font-weight:700;}
+.down{color:#dc2626;font-weight:700;}
+.market{font-size:40px;text-align:center;font-weight:700;margin:6px 0;}
+/* quiz */
+.q-num{font-size:12px;color:#aaa;}
+.q-text{font-size:16px;font-weight:700;line-height:1.6;margin:8px 0 6px;}
+.choice.ok{border-color:#10b981;background:#ecfdf5;}
+.choice.ng{border-color:#f87171;background:#fef2f2;}
+/* misc */
+.center{text-align:center;}
+.badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px;}
+.bdg{background:#fff7ed;border:2px solid #fed7aa;border-radius:14px;padding:6px 10px;font-size:12px;font-weight:700;color:#c2410c;}
+.p-text{font-size:13px;line-height:1.8;color:#555;}
+.p-text h3{font-size:14px;margin:14px 0 4px;color:#059669;}
+.p-text li{margin-left:18px;}
+.small{font-size:11px;color:#aaa;line-height:1.6;}
+.confetti{position:fixed;width:9px;height:9px;pointer-events:none;z-index:999;animation:cf 2s ease-in forwards;}
+@keyframes cf{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+.back{background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:12px;padding:5px 10px;font-family:inherit;font-size:12px;cursor:pointer;position:absolute;right:14px;top:18px;z-index:2;}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <button class="back" id="homeBtn" onclick="goHome()" style="display:none">🏠 メニュー</button>
+  <div class="hdr-title">🌳 おかねの木そだてゲーム</div>
+  <div class="hdr-sub">つかう・ためる・ふやす を あそびながら まなぼう</div>
+</div>
+<div class="content" id="app"></div>
+
+<script>
+// ===== util =====
+const $app = document.getElementById('app');
+const yen = n => Math.round(n).toLocaleString('ja-JP') + '円';
+const pct = r => (r>=0?'+':'') + Math.round(r*100) + '%';
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+function confetti(){
+  const cs=['#34d399','#f59e0b','#ff6b9d','#60a5fa','#a78bfa'];
+  for(let i=0;i<40;i++){
+    const d=document.createElement('div'); d.className='confetti';
+    d.style.left=Math.random()*100+'vw'; d.style.top='-10px';
+    d.style.background=cs[i%cs.length]; d.style.animationDelay=Math.random()*.6+'s';
+    d.style.borderRadius=Math.random()>.5?'50%':'2px';
+    document.body.appendChild(d); setTimeout(()=>d.remove(),2800);
+  }
+}
+function setHome(show){ document.getElementById('homeBtn').style.display=show?'block':'none'; window.scrollTo(0,0); }
+
+// ===== settings =====
+const START_AGE = 6, END_AGE = 18;
+const BANK_RATE = 0.002;       // ちょきん（銀行）の利息 0.2%
+const LONG_RATE = 0.04;        // 60歳まで の みらい予想に使う年4%
+const TREE_STAGES = [
+  {min:0,      e:'🌰', n:'たね'},
+  {min:5000,   e:'🌱', n:'め'},
+  {min:20000,  e:'🌿', n:'わかば'},
+  {min:50000,  e:'🪴', n:'こえだ'},
+  {min:100000, e:'🌳', n:'おおきな木'},
+  {min:200000, e:'🍎', n:'みのる木'},
+];
+const treeOf = v => [...TREE_STAGES].reverse().find(s=>v>=s.min);
+const incomeOf = age => 5000 + age*1000; // おとしだま＋おこづかいのあまり
+
+// ===== 市場シナリオ（毎回すこしちがう）=====
+function makeMarket(){
+  const years = END_AGE-START_AGE;
+  const base = [0.08,0.12,0.03,0.15,-0.06,0.10,0.06,0.18,-0.04,0.09,0.07,0.11];
+  const arr = base.map(r=> r + (Math.random()-.5)*0.08);
+  // 1回だけ「大暴落」の年をつくる（2〜8年目のどこか）
+  const crash = 2 + Math.floor(Math.random()*6);
+  arr[crash] = -0.25 - Math.random()*0.08;
+  arr[crash+1] = 0.18 + Math.random()*0.08; // その後は回復しやすい
+  return {returns:arr.slice(0,years), crash};
+}
+
+// ===== イベント =====
+const EVENTS = [
+  {e:'🎮', t:'ほしいゲームが はつばい！', d:'ともだちは みんな もってる…。3,000円 するよ。',
+   choices:[
+     {l:'🐷 ちょきんから かう', f:s=>{ if(s.savings>=3000){ s.savings-=3000; s.fun+=3; return 'ゲームをかった！たのしい！ ⭐+3'; } return 'ちょきんが たりなかった…。ほしいものの ために ためておくと いいね。'; }},
+     {l:'✋ がまんして らいねん かんがえる', f:s=>{ s.badges.add('がまんマスター'); s.fun+=0; return 'えらい！「ほんとうに ほしいかな？」と かんがえるのは だいじ。'; }},
+   ],
+   lesson:'<b>ほしいもの</b>と<b>ひつようなもの</b>は ちがうよ。すぐ かうより「1しゅうかん まってから きめる」と、むだづかいが へるよ。'},
+  {e:'🧹', t:'おてつだい がんばった！', d:'おうちの人から おれいに 2,000円 もらったよ。',
+   choices:[
+     {l:'🐷 ちょきんする', f:s=>{ s.savings+=2000; return 'ちょきんが 2,000円 ふえた！'; }},
+     {l:'🍦 アイスを かう', f:s=>{ s.fun+=2; return 'アイス おいしい！ ⭐+2'; }},
+   ],
+   lesson:'お金は <b>はたらいた おれい</b> として もらえるもの。だれかの やくに たつと、お金が うまれるんだ。'},
+  {e:'🕵️', t:'あやしい はなし…', d:'「ぜったい 2ばいに なるよ！ 5,000円 あずけて」と しらない人。',
+   choices:[
+     {l:'💸 あずけちゃう', f:s=>{ const x=Math.min(5000,s.savings); s.savings-=x; return `お金は もどってこなかった… ${yen(x)} なくなった。`; }},
+     {l:'🙅 ことわって おうちの人に はなす', f:s=>{ s.badges.add('サギみやぶり'); return 'ナイス はんだん！ おうちの人も ほめてくれたよ。'; }},
+   ],
+   lesson:'<b>「ぜったい もうかる」は ぜったい ウソ</b>。ふえる かもしれない ものには、へる かもしれない リスクが かならず あるよ。'},
+  {e:'🎂', t:'おばあちゃんから おいわい', d:'たんじょうびに 5,000円 もらった！',
+   choices:[
+     {l:'🌱 半分を つみたてに 入れる', f:s=>{ s.nisa+=2500; s.nisaIn+=2500; s.fun+=1; return 'つみたてに 2,500円！ のこりで ケーキも たべた ⭐+1'; }},
+     {l:'🧸 ぜんぶ ぬいぐるみに', f:s=>{ s.fun+=4; return 'かわいい ぬいぐるみ！ ⭐+4'; }},
+   ],
+   lesson:'もらった お金を <b>「つかう」「ためる」「ふやす」に わける</b> クセを つけると、たのしみも みらいも どっちも 大切に できるよ。'},
+  {e:'🤒', t:'かぜで すいぞくかんに いけなかった', d:'チケット代 1,000円 が むだに…。',
+   choices:[
+     {l:'🐷 ちょきんで カバー', f:s=>{ s.savings=Math.max(0,s.savings-1000); return 'ちょきんが あって たすかった！'; }},
+     {l:'😢 しかたない…', f:s=>{ s.fun=Math.max(0,s.fun-1); return 'ざんねん… ⭐-1'; }},
+   ],
+   lesson:'こまった ときの ために すぐ つかえる <b>ちょきん（よびの お金）</b> を もっておくと あんしん。ぜんぶを 投資に しないのが コツ。'},
+  {e:'🍋', t:'レモネード やさん を ひらこう！', d:'ざいりょう代 2,000円。うまくいけば もうかるかも？',
+   choices:[
+     {l:'🍋 ちょうせん する', f:s=>{ if(s.savings<2000) return 'ざいりょう代が たりなかった…'; s.savings-=2000; const win=Math.random()<.6; if(win){ s.savings+=4000; s.fun+=2; return '大せいこう！ 4,000円 うりあげ ⭐+2'; } s.savings+=1000; return 'あまり うれなかった… 1,000円 だけ もどった。'; }},
+     {l:'🙂 こんかいは やめておく', f:s=>'また こんど かんがえよう。'},
+   ],
+   lesson:'じぶんで しょうばいを すると <b>うりあげ − かかったお金 = もうけ</b> が わかるよ。会社も おなじ しくみで うごいてるんだ。'},
+  {e:'🧺', t:'たまごは 1つの かごに？', d:'ともだちが「1つの会社だけに ぜんぶ かけるのが いちばん！」って。',
+   choices:[
+     {l:'🧺 いろんな 会社に わけるよ', f:s=>{ s.badges.add('ぶんさん名人'); return 'せいかい！ いま つかってる つみたては、たくさんの 会社に わけて 投資してるよ。'; }},
+     {l:'🥚 1つに ぜんぶ！', f:s=>'その会社が ピンチに なったら たいへん…。かごを おとすと たまご ぜんぶ われちゃう。'},
+   ],
+   lesson:'<b>ぶんさん</b>：たまごを いくつかの かごに わけると、1つ おとしても ぜんぶは われない。投資も おなじだよ。'},
+];
+
+// ===== state =====
+let S = null;
+function newGame(name, ch){
+  const m = makeMarket();
+  S = {name, ch, age:START_AGE, idx:0, savings:0, nisa:0, nisaIn:0, fun:0,
+       shadowBank:0, // つみたて分を ぜんぶ ちょきん してたら
+       market:m.returns, crashIdx:m.crash, sold:false, soldAge:null,
+       alloc:null, badges:new Set(), hist:[{age:START_AGE, nisa:0, savings:0, nisaIn:0, shadow:0}],
+       eventsLeft: shuffle([...EVENTS.keys()])};
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+// ===== screens =====
+function goHome(){
+  setHome(false);
+  const best = store.get('okane_best', null);
+  const quizBest = store.get('okane_quiz_best', null);
+  $app.innerHTML = `
+  <div class="card center">
+    <div style="font-size:64px" class="tree grow">🌳</div>
+    <div style="font-weight:700;font-size:16px;margin-top:6px">お金の木を そだてよう！</div>
+    <div class="small" style="margin-top:4px">6さい〜18さい までの 12年を 1年ずつ すすめて<br>おとしだまを「つかう・ためる・ふやす」に わけるゲーム</div>
+    ${best?`<div class="age-badge" style="margin-top:10px">🏆 ベスト：${best.title}（${yen(best.total)}）</div>`:''}
+  </div>
+  <button class="menu-btn" onclick="setupScreen()"><span class="ic">🌱</span><span><b>つみたて チャレンジ</b><small>12年間 お金の木を そだてる メインゲーム（10分くらい）</small></span></button>
+  <button class="menu-btn" onclick="startQuiz()"><span class="ic">❓</span><span><b>おかね クイズ</b><small>10もん チャレンジ${quizBest!=null?`　ベスト ${quizBest}/10`:''}</small></span></button>
+  <button class="menu-btn" onclick="compoundToy()"><span class="ic">🧮</span><span><b>ふくりの まほう</b><small>まいつき いくら で 何円に なる？ ためしてみよう</small></span></button>
+  <button class="menu-btn" onclick="parentScreen()"><span class="ic">👨‍👩‍👧</span><span><b>おうちの人へ</b><small>あそび方・はなしあいの ヒント・こどもNISAについて</small></span></button>`;
+}
+
+function setupScreen(){
+  setHome(true);
+  const chars=['🐰','🐻','🐱','🐶','🦊','🐼'];
+  let sel = store.get('okane_char','🐰');
+  const name = store.get('okane_name','');
+  $app.innerHTML = `
+  <div class="card">
+    <div class="sec-title">🎮 じゅんび</div>
+    <div class="lbl">なまえ</div>
+    <input class="inp" id="nm" maxlength="10" placeholder="なまえを いれてね" value="${esc(name)}">
+    <div class="lbl" style="margin-top:12px">キャラクター</div>
+    <div class="chars">${chars.map(c=>`<button class="char ${c===sel?'sel':''}" data-c="${c}">${c}</button>`).join('')}</div>
+  </div>
+  <div class="card p-text">
+    <b>あそびかた</b>
+    <ol style="margin-top:6px">
+      <li>まいとし おとしだま などが もらえるよ</li>
+      <li>🍭<b>つかう</b>・🐷<b>ちょきん</b>・🌱<b>つみたて</b> に わけよう</li>
+      <li>つみたては 毎年 ふえたり へったり する（ドキドキ！）</li>
+      <li>18さいで おしまい。たのしさ⭐ と お金 の りょうほうが だいじ！</li>
+    </ol>
+  </div>
+  <button class="btn" id="go">スタート！</button>`;
+  $app.querySelectorAll('.char').forEach(b=>b.onclick=()=>{ sel=b.dataset.c; $app.querySelectorAll('.char').forEach(x=>x.classList.toggle('sel',x===b)); });
+  document.getElementById('go').onclick=()=>{
+    const n=document.getElementById('nm').value.trim()||'きみ';
+    store.set('okane_name',n); store.set('okane_char',sel);
+    newGame(n, sel); yearScreen();
+  };
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function statusHTML(){
+  const t = treeOf(S.nisa);
+  const total = END_AGE-START_AGE;
+  return `
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="age-badge">${S.ch} ${esc(S.name)} ・ ${S.age}さい</span>
+      <span class="lbl">${S.idx}/${total} 年</span>
+    </div>
+    <div class="progress"><div style="width:${S.idx/total*100}%"></div></div>
+    <div class="tree-box"><div class="tree" id="tree">${t.e}</div><div class="lbl" style="margin-top:8px">お金の木：${t.n}</div></div>
+  </div>
+  <div class="stat-row" style="margin-bottom:14px">
+    <div class="stat"><div class="e">⭐</div><div class="v">${S.fun}</div><div class="n">たのしさ</div></div>
+    <div class="stat"><div class="e">🐷</div><div class="v">${yen(S.savings)}</div><div class="n">ちょきん</div></div>
+    <div class="stat"><div class="e">🌱</div><div class="v">${yen(S.nisa)}</div><div class="n">つみたて</div></div>
+  </div>`;
+}
+
+// --- 1. 配分 ---
+function yearScreen(){
+  setHome(true);
+  const inc = incomeOf(S.age);
+  if(!S.alloc || S.alloc.total!==inc){
+    // 前の年の わりあいを ひきつぐ（はじめは 3:3:4）
+    const p = S.alloc ? {use:S.alloc.use/S.alloc.total, save:S.alloc.save/S.alloc.total} : {use:.3,save:.3};
+    const use = Math.round(inc*p.use/1000)*1000;
+    const save = Math.round(inc*p.save/1000)*1000;
+    S.alloc = {total:inc, use:Math.min(use,inc), save:Math.min(save,inc-Math.min(use,inc))};
+    S.alloc.nisa = inc - S.alloc.use - S.alloc.save;
+  }
+  const a=S.alloc;
+  const row=(k,ic,name,desc)=>`
+    <div class="alloc"><span class="ic">${ic}</span><span class="t"><b>${name}</b><small>${desc}</small></span>
+    <span class="stepper"><button data-k="${k}" data-d="-1">−</button><span class="amt" id="a_${k}">${yen(a[k])}</span><button data-k="${k}" data-d="1">＋</button></span></div>`;
+  $app.innerHTML = statusHTML() + `
+  <div class="card">
+    <div class="sec-title">🧧 ${S.age}さいの おとしだま＆おこづかい：<span style="color:#f59e0b">${yen(inc)}</span></div>
+    ${row('use','🍭','つかう','すぐ たのしい！ 1,000円で ⭐+1')}
+    ${row('save','🐷','ちょきん','へらない。でも ほとんど ふえない（年0.2%）')}
+    ${row('nisa','🌱','つみたて','世界の会社に ぶんさん投資。ふえたり へったり')}
+    <div class="remain" id="remain"></div>
+    <button class="btn" id="next">これで けってい！</button>
+  </div>`;
+  const upd=()=>{
+    const left = a.total - a.use - a.save - a.nisa;
+    ['use','save','nisa'].forEach(k=>document.getElementById('a_'+k).textContent=yen(a[k]));
+    const r=document.getElementById('remain');
+    r.textContent = left===0 ? '✅ ぴったり わけられたよ' : `のこり ${yen(left)}`;
+    r.style.color = left===0 ? '#059669' : '#f59e0b';
+    document.getElementById('next').disabled = left!==0;
+  };
+  $app.querySelectorAll('.stepper button').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k, d=+b.dataset.d*1000;
+    const left = a.total - a.use - a.save - a.nisa;
+    if(d>0 && left<=0){
+      // のこりが ない時は ほかから 1000円 もってくる
+      const from = ['nisa','save','use'].find(x=>x!==k && a[x]>=1000);
+      if(!from) return; a[from]-=1000;
+    }
+    if(d<0 && a[k]<1000) return;
+    a[k]+=d; upd();
+  });
+  upd();
+  document.getElementById('next').onclick=()=>{
+    S.fun += Math.floor(a.use/1000);
+    S.savings += a.save;
+    S.nisa += a.nisa; S.nisaIn += a.nisa;
+    S.shadowBank += a.nisa;
+    if(a.nisa>0) S.yearsInvested=(S.yearsInvested||0)+1;
+    eventScreen();
+  };
+}
+
+// --- 2. イベント ---
+function eventScreen(){
+  if(!S.eventsLeft.length) S.eventsLeft = shuffle([...EVENTS.keys()]);
+  // 3年に2回くらい イベント
+  if(Math.random()<.35){ marketScreen(); return; }
+  const ev = EVENTS[S.eventsLeft.pop()];
+  $app.innerHTML = statusHTML() + `
+  <div class="card event">
+    <div class="big">${ev.e}</div>
+    <div class="sec-title center" style="margin-top:6px">${ev.t}</div>
+    <div class="p-text center">${ev.d}</div>
+    <div id="chs">${ev.choices.map((c,i)=>`<button class="choice" data-i="${i}">${c.l}</button>`).join('')}</div>
+    <div id="out"></div>
+  </div>`;
+  $app.querySelectorAll('#chs .choice').forEach(b=>b.onclick=()=>{
+    const msg = ev.choices[+b.dataset.i].f(S);
+    document.getElementById('chs').innerHTML='';
+    document.getElementById('out').innerHTML = `<div class="p-text center" style="margin-top:10px;font-weight:700">${msg}</div>
+      <div class="lesson">💡 ${ev.lesson}</div><button class="btn" style="margin-top:12px" onclick="marketScreen()">つぎへ ▶</button>`;
+  });
+}
+
+// --- 3. 1年の けっか ---
+function marketScreen(){
+  const r = S.market[S.idx];
+  const isCrash = S.idx===S.crashIdx;
+  const before = S.nisa;
+  S.nisa = S.nisa*(1+r);
+  const bankGain = S.savings*BANK_RATE;
+  S.savings += bankGain;
+  S.shadowBank *= (1+BANK_RATE);
+  const nisaDiff = S.nisa-before;
+  const news = isCrash ? '📰 大ニュース！ 世界中で 株が 大きく 下がった！'
+             : r>=0.12 ? '📰 世界の 会社が 大かつやく！'
+             : r>=0 ? '📰 世界の 会社は まあまあ 元気'
+             : '📰 ちょっと けいきが わるい 年だった';
+  $app.innerHTML = statusHTML() + `
+  <div class="card">
+    <div class="sec-title">📅 ${S.age}さい の 1年の けっか</div>
+    <div class="p-text">${news}</div>
+    <div class="market ${r>=0?'up':'down'}">${r>=0?'📈':'📉'} ${pct(r)}</div>
+    <div class="result-line"><span>🌱 つみたて</span><span class="${nisaDiff>=0?'up':'down'}">${nisaDiff>=0?'+':''}${yen(nisaDiff)}</span></div>
+    <div class="result-line"><span>🐷 ちょきんの りそく</span><span class="up">+${yen(bankGain)}</span></div>
+    <div id="crashBox"></div>
+    <div id="nextBox"><button class="btn" style="margin-top:14px" id="nx">${S.idx+1>=S.market.length?'🎉 けっかを 見る':'つぎの 年へ ▶'}</button></div>
+  </div>`;
+  const tree=document.getElementById('tree');
+  tree.classList.add(r>=0?'grow':'shake');
+  if(isCrash && S.nisa>0){
+    document.getElementById('nextBox').style.display='none';
+    document.getElementById('crashBox').innerHTML = `
+      <div class="lesson" style="background:#fef2f2;color:#7f1d1d">😱 みんな「こわい！ ぜんぶ うっちゃえ！」と さわいでる…<br>つみたて ${yen(S.nisa)} を どうする？</div>
+      <button class="choice" id="sell">💨 こわいから ぜんぶ うって ちょきんに する</button>
+      <button class="choice" id="hold">🧘 あわてず そのまま もちつづける</button>`;
+    document.getElementById('sell').onclick=()=>{
+      S.savings += S.nisa; S.nisa = 0; S.sold=true; S.soldAge=S.age;
+      document.getElementById('crashBox').innerHTML = `<div class="lesson">下がった ときに うると、<b>そんが そのまま きまって</b> しまうんだ。この あと ねだんが もどっても、もう とりかえせない…。<br>らいねんからも つみたては つづけられるよ。</div>`;
+      document.getElementById('nextBox').style.display='block';
+    };
+    document.getElementById('hold').onclick=()=>{
+      S.badges.add('どっしり ホールド');
+      document.getElementById('crashBox').innerHTML = `<div class="lesson">すごい！ 長い れきしで みると、大きく 下がっても <b>数年で もどる</b> ことが 多かったよ。<b>長く つづける人が いちばん 強い</b>んだ。（でも ぜったい ではないよ）</div>`;
+      document.getElementById('nextBox').style.display='block';
+    };
+  }
+  document.getElementById('nx').onclick=()=>{
+    S.idx++; S.age++;
+    S.hist.push({age:S.age, nisa:S.nisa, savings:S.savings, nisaIn:S.nisaIn, shadow:S.shadowBank});
+    if(S.idx>=S.market.length) endScreen(); else yearScreen();
+  };
+}
+
+// --- 4. エンディング ---
+let chart=null;
+function endScreen(){
+  setHome(true);
+  const total = S.nisa + S.savings;
+  const gain = S.nisa - S.nisaIn;
+  const future = S.nisa * Math.pow(1+LONG_RATE, 60-END_AGE);
+  if(S.yearsInvested>=12) S.badges.add('12年 つみたて');
+  if(!S.sold && S.nisa>0) S.badges.add('さいごまで ガマン');
+  if(S.fun>=40) S.badges.add('たのしみ上手');
+  // ランク：お金 と たのしさ の バランス
+  const score = total/1000 + S.fun*3;
+  const title = S.fun<8 ? 'がまん しすぎ？ ちょきん ロボ 🤖'
+              : S.nisa<10000 ? 'いまを たのしむ キリギリス 🦗'
+              : score>=380 ? 'お金の木マスター 🍎'
+              : score>=280 ? 'つみたて 名人 🌳'
+              : 'お金の木 みならい 🌿';
+  const best = store.get('okane_best',null);
+  if(!best || total>best.total) store.set('okane_best',{total, title});
+  confetti();
+  $app.innerHTML = `
+  <div class="card center">
+    <div style="font-size:60px" class="tree grow">${treeOf(S.nisa).e}</div>
+    <div class="lbl" style="margin-top:6px">${S.ch} ${esc(S.name)} の しょうごう</div>
+    <div style="font-weight:700;font-size:20px;color:#059669;margin:4px 0 10px">${title}</div>
+    <div class="result-line"><span>🌱 つみたて</span><b>${yen(S.nisa)}</b></div>
+    <div class="result-line"><span>　└ 入れた お金</span><span>${yen(S.nisaIn)}</span></div>
+    <div class="result-line"><span>　└ ふえた ぶん</span><span class="${gain>=0?'up':'down'}">${gain>=0?'+':''}${yen(gain)}</span></div>
+    <div class="result-line"><span>🐷 ちょきん</span><b>${yen(S.savings)}</b></div>
+    <div class="result-line"><span>⭐ たのしさ</span><b>${S.fun}</b></div>
+    ${S.badges.size?`<div class="badges">${[...S.badges].map(b=>`<span class="bdg">🏅 ${b}</span>`).join('')}</div>`:''}
+  </div>
+  <div class="card">
+    <div class="sec-title">📊 お金の うごき</div>
+    <canvas id="ch" height="220"></canvas>
+    <div class="small" style="margin-top:6px">点線は「つみたてに 入れた お金を ぜんぶ ちょきん していたら」の ばあい。</div>
+  </div>
+  <div class="card center" style="background:linear-gradient(135deg,#ecfdf5,#fffbeb)">
+    <div class="sec-title">🔮 もしも この つみたてを<br>さわらずに 60さいまで おいておくと…</div>
+    <div style="font-size:28px;font-weight:700;color:#d97706">${yen(future)}</div>
+    <div class="small">（毎年 4% ずつ ふえた と したときの たとえ。ほんとうは 毎年 かわるよ）</div>
+    <div class="lesson" style="text-align:left">💡 ふえた お金が また ふえる ことを <b>「ふくり」</b> というよ。はやく はじめて 長く つづけるほど 木は 大きく なるんだ。</div>
+  </div>
+  <div class="card p-text">
+    <b>きょう まなんだ こと</b>
+    <ul style="margin-top:6px">
+      <li>お金は「つかう・ためる・ふやす」に わけよう</li>
+      <li>投資は ふえる ことも へる ことも ある</li>
+      <li>下がっても あわてず、長く つづけるのが コツ</li>
+      <li>いろんな 会社に わける（ぶんさん）と あんしん</li>
+      <li>「ぜったい もうかる」話は うたがおう</li>
+    </ul>
+    ${S.sold?`<div class="lesson">こんかいは ${S.soldAge}さい の 大暴落で うっちゃったね。もう1回 あそんで「もちつづけた ばあい」と くらべてみよう！</div>`:''}
+  </div>
+  <button class="btn" onclick="setupScreen()">🔁 もう1回 あそぶ</button>
+  <button class="btn gray" onclick="goHome()">🏠 メニューへ</button>`;
+  const ctx=document.getElementById('ch');
+  if(window.Chart){
+    if(chart) chart.destroy();
+    chart = new Chart(ctx,{type:'line',data:{labels:S.hist.map(h=>h.age+'さい'),datasets:[
+      {label:'つみたて',data:S.hist.map(h=>Math.round(h.nisa)),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.12)',fill:true,tension:.3,pointRadius:2},
+      {label:'入れたお金',data:S.hist.map(h=>h.nisaIn),borderColor:'#9ca3af',borderDash:[5,4],pointRadius:0,tension:.2},
+      {label:'ちょきん',data:S.hist.map(h=>Math.round(h.savings)),borderColor:'#f59e0b',pointRadius:2,tension:.3},
+    ]},options:{plugins:{legend:{labels:{font:{family:'Zen Maru Gothic'}}}},scales:{y:{ticks:{callback:v=>(v/10000)+'万'}}}}});
+  } else {
+    ctx.replaceWith(Object.assign(document.createElement('div'),{className:'small',textContent:'（グラフを よみこめませんでした）'}));
+  }
+}
+
+// ===== ふくりの まほう =====
+function compoundToy(){
+  setHome(true);
+  $app.innerHTML = `
+  <div class="card">
+    <div class="sec-title">🧮 ふくりの まほう</div>
+    <div class="lbl">まいつき つみたてる お金</div>
+    <input type="range" id="m" min="500" max="10000" step="500" value="1000" style="width:100%">
+    <div class="center" style="font-weight:700" id="mv"></div>
+    <div class="lbl" style="margin-top:10px">つづける 年数</div>
+    <input type="range" id="y" min="1" max="50" step="1" value="12" style="width:100%">
+    <div class="center" style="font-weight:700" id="yv"></div>
+    <div class="lbl" style="margin-top:10px">1年で ふえる わりあい（たとえ）</div>
+    <input type="range" id="r" min="0" max="7" step="1" value="4" style="width:100%">
+    <div class="center" style="font-weight:700" id="rv"></div>
+  </div>
+  <div class="card center">
+    <div class="result-line"><span>入れた お金</span><b id="o1"></b></div>
+    <div class="result-line"><span>ふえた ぶん</span><b class="up" id="o2"></b></div>
+    <div style="font-size:30px;font-weight:700;color:#d97706;margin-top:10px" id="o3"></div>
+    <canvas id="ch2" height="200" style="margin-top:10px"></canvas>
+    <div class="small" style="margin-top:6px">※ 本当の 投資は 毎年 ふえたり へったり するので、この とおりには ならないよ。</div>
+  </div>`;
+  let c2=null;
+  const calc=()=>{
+    const m=+document.getElementById('m').value, y=+document.getElementById('y').value, r=+document.getElementById('r').value/100;
+    document.getElementById('mv').textContent=yen(m)+' / 月';
+    document.getElementById('yv').textContent=y+' 年';
+    document.getElementById('rv').textContent=(r*100)+' %';
+    const ins=[],vals=[],labels=[]; let v=0;
+    for(let i=1;i<=y;i++){ v=(v+m*12)*(1+r); ins.push(m*12*i); vals.push(Math.round(v)); labels.push(i+'年'); }
+    document.getElementById('o1').textContent=yen(m*12*y);
+    document.getElementById('o2').textContent='+'+yen(v-m*12*y);
+    document.getElementById('o3').textContent='→ '+yen(v);
+    if(!window.Chart) return;
+    if(c2){ c2.data.labels=labels; c2.data.datasets[0].data=vals; c2.data.datasets[1].data=ins; c2.update('none'); return; }
+    c2=new Chart(document.getElementById('ch2'),{type:'bar',data:{labels,datasets:[
+      {label:'ふえたあと',data:vals,backgroundColor:'rgba(16,185,129,.6)',borderRadius:4},
+      {label:'入れたお金',data:ins,backgroundColor:'rgba(156,163,175,.5)',borderRadius:4}]},
+      options:{animation:false,plugins:{legend:{labels:{font:{family:'Zen Maru Gothic'}}}},scales:{x:{stacked:false},y:{ticks:{callback:v=>(v/10000)+'万'}}}}});
+  };
+  ['m','y','r'].forEach(id=>document.getElementById(id).oninput=calc);
+  calc();
+}
+
+// ===== クイズ =====
+const QUIZ = [
+  {q:'お金を ぎんこうに あずけると、すこし ふえる。この ふえる お金を なんという？', c:['りそく（利息）','おつり','ぜいきん'], a:0, x:'ぎんこうは あずかった お金を 会社などに かして、その おれいの 一部を「りそく」として くれるよ。'},
+  {q:'「ほしいもの」と「ひつようなもの」、さきに 考えたほうが いいのは？', c:['ほしいもの','ひつようなもの','どっちでも いい'], a:1, x:'まず くらしに ひつようなものを たいせつに。のこりで ほしいものを かうと こまらないよ。'},
+  {q:'「ぜったい 2ばいに なるよ！」と言われたら？', c:['すぐ お金を あずける','ともだちにも すすめる','あやしいと おもって おうちの人に そうだん'], a:2, x:'ぜったい もうかる 話は ないよ。ふえる 可能性が あるものには、へる リスクも かならず ある。'},
+  {q:'株（かぶ）を かうと、なにに なれる？', c:['その会社の オーナーの ひとり','その会社の 社員','その会社の おきゃくさん だけ'], a:0, x:'株を もつと、会社の 小さな オーナーに なれるよ。会社が せいちょうすると 株の かちも 上がりやすい。'},
+  {q:'たまごを いくつかの かごに わけて はこぶのは なぜ？', c:['はこぶのが はやいから','1つ おとしても ぜんぶは われないから','かごが かわいいから'], a:1, x:'これが「ぶんさん」の考え方。投資でも、いろんな 会社や 国に わけると リスクが へるよ。'},
+  {q:'ふえた お金に また りそくが つく しくみを なんという？', c:['たんり','ふくり','ぎゃくり'], a:1, x:'「ふくり」は 雪だるま みたい。長く つづけるほど どんどん 大きく なるよ。'},
+  {q:'投資している ものが 大きく 下がった。長い目で みると よく いわれる ことは？', c:['あわてて うると そんが きまる','すぐ うるのが ぜったい 正解','もう 2どと もどらない'], a:0, x:'れきし的には 下がっても もどる ことが 多かった。ただし ぜったい ではないから、なくなっても こまらない お金で やるのが だいじ。'},
+  {q:'NISA（ニーサ）って どんな しくみ？', c:['ふえた お金に ぜいきんが かからない しくみ','お金が ぜったい ふえる しくみ','ただで お金が もらえる しくみ'], a:0, x:'ふつうは もうけの 約20%が ぜいきん。NISAなら それが かからないから、そのぶん たくさん のこるよ。でも へる ことも あるよ。'},
+  {q:'おこづかい 1,000円。おすすめの つかい方は？', c:['ぜんぶ その日に つかう','「つかう・ためる・ふやす」に わける','ぜんぶ かくしておく'], a:1, x:'わける クセが つくと、いまの たのしみも みらいの ゆめも どっちも 大切に できるよ。'},
+  {q:'まいつき すこしずつ 同じ金額を 投資する やり方を なんという？', c:['いっぱつ 投資','つみたて 投資','ぐうぜん 投資'], a:1, x:'「つみたて」なら ねだんが 高い月は すこし、安い月は たくさん かえるので、タイミングに なやまなくて いいよ。'},
+];
+let QZ=null;
+function startQuiz(){ setHome(true); QZ={order:shuffle([...QUIZ.keys()]),i:0,score:0}; quizQ(); }
+function quizQ(){
+  const q=QUIZ[QZ.order[QZ.i]];
+  $app.innerHTML=`<div class="card">
+    <div class="q-num">もんだい ${QZ.i+1} / ${QUIZ.length}　・　せいかい ${QZ.score}</div>
+    <div class="progress"><div style="width:${QZ.i/QUIZ.length*100}%"></div></div>
+    <div class="q-text">${q.q}</div>
+    <div id="cs">${q.c.map((c,i)=>`<button class="choice" data-i="${i}">${['A','B','C'][i]}. ${c}</button>`).join('')}</div>
+    <div id="ex"></div></div>`;
+  $app.querySelectorAll('#cs .choice').forEach(b=>b.onclick=()=>{
+    if(QZ.done) return; QZ.done=true;
+    const i=+b.dataset.i, ok=i===q.a; if(ok) QZ.score++;
+    $app.querySelectorAll('#cs .choice').forEach((x,j)=>{ if(j===q.a) x.classList.add('ok'); else if(j===i) x.classList.add('ng'); });
+    document.getElementById('ex').innerHTML=`<div class="center" style="font-size:22px;font-weight:700;margin-top:12px;color:${ok?'#059669':'#dc2626'}">${ok?'⭕ せいかい！':'❌ ざんねん'}</div>
+      <div class="lesson">💡 ${q.x}</div><button class="btn" style="margin-top:12px" id="qn">${QZ.i+1>=QUIZ.length?'けっかへ':'つぎへ ▶'}</button>`;
+    document.getElementById('qn').onclick=()=>{ QZ.done=false; QZ.i++; QZ.i>=QUIZ.length?quizEnd():quizQ(); };
+  });
+}
+function quizEnd(){
+  const s=QZ.score; const best=store.get('okane_quiz_best',0);
+  if(s>best) store.set('okane_quiz_best',s);
+  if(s>=8) confetti();
+  $app.innerHTML=`<div class="card center">
+    <div style="font-size:60px">${s===10?'👑':s>=8?'🏆':s>=5?'✨':'💪'}</div>
+    <div style="font-size:26px;font-weight:700;margin:8px 0">${s} / ${QUIZ.length} もん せいかい</div>
+    <div class="p-text">${s===10?'パーフェクト！ お金はかせだ！':s>=8?'すごい！ お金の ちしきが ばっちり！':s>=5?'いいね！ もう1回 やると もっと わかるよ':'だいじょうぶ！ かいせつを よんで もう1回！'}</div>
+  </div>
+  <button class="btn" onclick="startQuiz()">🔁 もう1回</button>
+  <button class="btn gray" onclick="goHome()">🏠 メニューへ</button>`;
+}
+
+// ===== おうちの人へ =====
+function parentScreen(){
+  setHome(true);
+  $app.innerHTML=`<div class="card p-text">
+    <div class="sec-title">👨‍👩‍👧 おうちの人へ</div>
+    <p>このゲームは、お子さまが<b>「使う・貯める・増やす」</b>のバランスと、<b>長期・積立・分散</b>の考え方を体験的に学ぶためのものです。</p>
+    <h3>🎯 ゲームで体験できること</h3>
+    <ul>
+      <li>毎年のお年玉を3つに分ける「予算配分」</li>
+      <li>投資は上下する（毎回シナリオが少しずつ変わります）</li>
+      <li>必ず1回起きる「大暴落」で売るか持つかの判断</li>
+      <li>詐欺・衝動買い・分散などのイベント</li>
+      <li>「楽しさ⭐」も評価対象。我慢しすぎも高評価になりません</li>
+    </ul>
+    <h3>💬 遊んだあとの会話のヒント</h3>
+    <ul>
+      <li>「暴落のとき、どうして売った（持ち続けた）の？」</li>
+      <li>「⭐とお金、どっちも大事にするにはどう分ける？」</li>
+      <li>「実際のお年玉、今年はどう分けてみる？」</li>
+      <li>「株を持つと会社のオーナーになれるって、どの会社がいい？」</li>
+    </ul>
+    <h3>🏦 こども向けのNISAについて</h3>
+    <p>2027年から、未成年もNISAの「つみたて投資枠」を利用できる制度（いわゆる「こどもNISA」）が始まる予定です。親が子ども名義で積み立て、一定年齢以降は教育費などに引き出せる設計が検討・決定されています。</p>
+    <p class="small">※ 対象年齢・年間上限・引き出し条件などの詳細は変更される場合があります。口座開設前に必ず金融庁や金融機関の最新情報をご確認ください。</p>
+    <h3>⚠️ ご注意</h3>
+    <ul class="small">
+      <li>ゲーム内の値動き・「年4%」などの数字は学習用の仮のもので、将来の運用成果を示すものではありません。</li>
+      <li>特定の金融商品をすすめるものではありません。</li>
+      <li>記録はこの端末のブラウザにのみ保存されます（ベストスコアのみ）。</li>
+    </ul>
+  </div>
+  <button class="btn gray" onclick="goHome()">🏠 メニューへ</button>`;
+}
+
+goHome();
+</script>
+</body>
+</html>
