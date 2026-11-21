@@ -122,6 +122,41 @@ body{font-family:'Zen Maru Gothic','Hiragino Maru Gothic Pro',sans-serif;backgro
 .rank .m{font-size:30px;}
 .rank .tot{font-weight:700;font-size:18px;color:#d97706;}
 .new{background:#ff6b9d;color:#fff;border-radius:8px;font-size:10px;padding:1px 6px;margin-left:4px;vertical-align:middle;}
+/* ===== おかねの がっこう ===== */
+.sc-path{position:relative;padding:4px 0 10px;}
+.sc-node{display:flex;align-items:center;gap:12px;width:calc(100% - 70px);padding:12px 14px;margin-bottom:10px;border:3px solid #e0e7ff;border-radius:22px;background:#fff;font-family:inherit;text-align:left;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.05);}
+.sc-node .sc-ic{font-size:32px;width:44px;height:44px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex:none;}
+.sc-node .sc-tx{display:flex;flex-direction:column;line-height:1.35;}
+.sc-node .sc-tx b{font-size:15px;color:#333;}
+.sc-node .sc-tx small{font-size:11px;color:#999;}
+.sc-node.done{border-color:#fcd34d;background:#fffbeb;}
+.sc-node.done .sc-ic{background:#fef3c7;}
+.sc-node.cur{border-color:#34d399;animation:scpulse 1.6s ease-in-out infinite;}
+@keyframes scpulse{50%{box-shadow:0 0 0 6px rgba(52,211,153,.25);}}
+.sc-node.lock{opacity:.5;cursor:default;background:#f8fafc;}
+.sc-ill{font-size:64px;text-align:center;margin:14px 0 6px;letter-spacing:4px;}
+.sc-st{font-weight:700;font-size:18px;text-align:center;color:#1d4ed8;margin-bottom:8px;}
+.sc-b{font-size:15px;line-height:1.9;background:#f8fafc;border-radius:14px;padding:12px 14px;}
+.sc-b b{color:#d97706;}
+.sc-dots{display:flex;justify-content:center;gap:6px;margin-top:12px;}
+.sc-dots i{width:8px;height:8px;border-radius:50%;background:#e5e7eb;}
+.sc-dots i.on{background:#10b981;width:20px;border-radius:4px;}
+.sc-bub{background:#fff7ed;border-radius:16px;padding:12px 14px;font-size:14px;line-height:1.7;margin:8px 0;}
+.sc-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f3f3f3;}
+.sc-mini{padding:7px 10px;border-radius:12px;border:2px solid #e5e7eb;background:#fff;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;color:#555;}
+.sc-mini.ok{border-color:#10b981;background:#ecfdf5;color:#059669;}
+.sc-mini.ng{border-color:#f87171;background:#fef2f2;color:#dc2626;}
+.sc-big{text-align:center;font-size:22px;margin-top:12px;}
+.sc-big b{color:#d97706;font-size:30px;}
+.sc-coins{text-align:center;font-size:18px;line-height:1.3;margin-top:6px;word-break:break-all;}
+.sc-bar{height:22px;background:#f1f5f9;border-radius:11px;overflow:hidden;}
+.sc-bar>div{height:100%;width:0;border-radius:11px;transition:width .08s linear;}
+.sc-price{font-weight:700;font-size:16px;}
+.sc-chart{display:flex;align-items:flex-end;gap:6px;height:90px;padding:6px;background:#f8fafc;border-radius:12px;margin:8px 0;}
+.sc-chart>div{flex:1;background:linear-gradient(#34d399,#10b981);border-radius:6px 6px 0 0;transition:height .4s;}
+.sc-two{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sc-basket{font-size:22px;text-align:center;min-height:56px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;letter-spacing:2px;}
+.sc-cert{margin:4px 0 14px;padding:26px 18px;text-align:center;background:#fffbeb;border:6px double #f59e0b;border-radius:18px;box-shadow:0 6px 20px rgba(245,158,11,.2);}
 </style>
 </head>
 <body>
@@ -252,7 +287,8 @@ function goHome(){
     <div class="small" style="margin-top:4px">6さい〜18さい までの 12年を 1年ずつ すすめて<br>おとしだまを「つかう・ためる・ふやす」に わけるゲーム</div>
     ${best?`<div class="age-badge" style="margin-top:10px">🏆 ベスト：${best.title}（${yen(best.total)}）</div>`:''}
   </div>
-  <button class="menu-btn" onclick="sgSetup()" style="border-color:#fbcfe8;background:linear-gradient(135deg,#fff0f6,#fffbeb)"><span class="ic">🎲</span><span><b>おかね すごろく<span class="new">NEW</span></b><small>サイコロで すすむ 人生すごろく。かぞくで 1〜4人（20分くらい）</small></span></button>
+  <button class="menu-btn" onclick="schoolMap()" style="border-color:#bfdbfe;background:linear-gradient(135deg,#eff6ff,#ecfdf5)"><span class="ic">📚</span><span><b>おかねの がっこう<span class="new">NEW</span></b><small>お金って なに？ から 投資信託・NISA まで 10しょうで じゅんばんに まなぶ</small></span></button>
+  <button class="menu-btn" onclick="sgSetup()" style="border-color:#fbcfe8;background:linear-gradient(135deg,#fff0f6,#fffbeb)"><span class="ic">🎲</span><span><b>おかね すごろく</b><small>サイコロで すすむ 人生すごろく。かぞくで 1〜4人（20分くらい）</small></span></button>
   <button class="menu-btn" onclick="setupScreen()"><span class="ic">🌱</span><span><b>つみたて チャレンジ</b><small>12年間 お金の木を そだてる メインゲーム（10分くらい）</small></span></button>
   <button class="menu-btn" onclick="startQuiz()"><span class="ic">❓</span><span><b>おかね クイズ</b><small>10もん チャレンジ${quizBest!=null?`　ベスト ${quizBest}/10`:''}</small></span></button>
   <button class="menu-btn" onclick="compoundToy()"><span class="ic">🧮</span><span><b>ふくりの まほう</b><small>まいつき いくら で 何円に なる？ ためしてみよう</small></span></button>
@@ -1048,6 +1084,415 @@ function sgEnd(){
   G=null;
 }
 
+// =====================================================
+// ===== おかねの がっこう（たいけいてきに まなぶ）=====
+// =====================================================
+const SCHOOL = [
+ {id:'money', e:'💰', t:'お金って なに？', s:'お金の 3つの やくわり',
+  slides:[
+   {e:'🐟🔁🍞', t:'むかしは「こうかん」', b:'お金が なかった ころは、さかなと パンの ように <b>ものと ものを とりかえて</b> いたよ。これを「ぶつぶつ こうかん」と いうんだ。'},
+   {e:'😵', t:'でも こまった ことが…', b:'パンやさんが さかなを いらなかったら？ <b>おたがいに ほしい ものが ちょうど あう</b> のは、なかなか むずかしい。'},
+   {e:'💴', t:'そこで うまれたのが お金', b:'だれでも うけとって くれる「お金」が あれば、すぐに こうかん できる！ お金には <b>3つの やくわり</b> が あるよ。'},
+   {e:'🔁📏🏦', t:'お金の 3つの やくわり', b:'① <b>こうかん</b>：ものや サービスと とりかえる<br>② <b>ものさし</b>：ねだんで かちを くらべる<br>③ <b>ためる</b>：あとで つかう ために とっておける'},
+   {e:'👩‍🍳🧑‍🔧', t:'お金は どこから くる？', b:'おとなは <b>はたらいて</b>、だれかの やくに たった おれいとして お金を もらう。おこづかいも、おうちの人が はたらいた お金なんだ。'},
+  ],
+  act:'barter',
+  quiz:[
+   {q:'お金が うまれる まえ、人は どうやって ほしい ものを 手に いれていた？', c:['ぶつぶつ こうかん','クレジットカード','ポイント'], a:0, x:'ものと ものを とりかえる「ぶつぶつ こうかん」を していたよ。'},
+   {q:'ねだんで「どっちが 高い かち？」を くらべられるのは お金の どんな やくわり？', c:['ためる','ものさし','こうかん'], a:1, x:'お金は かちを はかる「ものさし」の やくわりが あるよ。'},
+   {q:'おとなが お金を もらえる いちばんの りゆうは？', c:['ぎんこうが くれるから','はたらいて 人の やくに たつから','お店で もらえるから'], a:1, x:'はたらいて だれかの やくに たつと、その おれいに お金が もらえるよ。'},
+  ]},
+ {id:'use', e:'🛒', t:'じょうずな つかいかた', s:'ほしい と ひつよう',
+  slides:[
+   {e:'🍚👕', t:'「ひつよう」な もの', b:'ごはん・ふく・がっこうの どうぐ など、<b>ないと こまる もの</b>。'},
+   {e:'🎮🧸', t:'「ほしい」もの', b:'ゲーム・おもちゃ・おかし など、<b>あると うれしい けど、なくても くらせる もの</b>。'},
+   {e:'⚖️', t:'さきに「ひつよう」', b:'お金には かぎりが ある。まず <b>ひつようを たいせつに</b>、のこりで ほしい ものを えらぶと こまらないよ。'},
+   {e:'⏳', t:'まよったら 1しゅうかん まつ', b:'すぐ かわずに 少し まつと「やっぱり いらないかも」と 気づく ことが あるよ。'},
+   {e:'🍭🐷🌱', t:'3つに わけよう', b:'もらった お金を <b>つかう・ためる・ふやす</b> に わける クセを つけると、いまも みらいも たいせつに できる。'},
+  ],
+  act:'needwant',
+  quiz:[
+   {q:'つぎの うち「ひつよう」な ものは？', c:['新しい ゲーム','がっこうの えんぴつ','にんきの カード'], a:1, x:'えんぴつは べんきょうに ないと こまる「ひつよう」な もの。'},
+   {q:'ほしい ものが あって まよったら？', c:['すぐ かう','少し まって ほんとうに ほしいか かんがえる','ともだちに かって もらう'], a:1, x:'少し まつと、むだづかいが へるよ。'},
+   {q:'おこづかいの おすすめの つかいかたは？', c:['もらった 日に ぜんぶ つかう','つかう・ためる・ふやす に わける','ぜんぶ かくしておく'], a:1, x:'わける ことで いまの たのしみと みらいの ゆめを りょうほう たいせつに できる。'},
+  ]},
+ {id:'save', e:'🏦', t:'ためる と ぎんこう', s:'ちょきん・りそく',
+  slides:[
+   {e:'🎯🐷', t:'もくひょうを きめて ためる', b:'「6,000円の ゲームの ために まいつき 500円」の ように <b>もくひょう</b> を きめると、ためるのが たのしく なる。'},
+   {e:'🏦', t:'ぎんこう って なに？', b:'お金を <b>あんぜんに あずかって くれる</b> ところ。あずけた お金は、ひつような ときに おろせるよ。'},
+   {e:'🔄', t:'ぎんこうの しくみ', b:'ぎんこうは あずかった お金を、お店や 会社に <b>かして</b> いる。かりた 人は、おれいの お金を ぎんこうに はらうんだ。'},
+   {e:'🪙', t:'「りそく」が もらえる', b:'そのおれいの 一部が、あずけた人に <b>りそく（利息）</b> として もどって くる。でも いまの ふつうよきんの りそくは <b>とても 少し</b>（1年で 0.2%くらい）。'},
+  ],
+  act:'goal',
+  quiz:[
+   {q:'ぎんこうに あずけた お金に つく おまけの お金を なんという？', c:['おつり','りそく','ぜいきん'], a:1, x:'あずけた お金に つくのが「りそく（利息）」だよ。'},
+   {q:'ぎんこうは あずかった お金を どうしている？', c:['きんこに しまって おくだけ','お店や 会社に かしている','すてている'], a:1, x:'かして おれいを もらい、その一部を りそくとして はらって いるよ。'},
+   {q:'6,000円の ゲームの ために まいつき 1,000円 ためると 何か月？', c:['3か月','6か月','10か月'], a:1, x:'6,000 ÷ 1,000 = 6か月 だね。'},
+  ]},
+ {id:'grow', e:'⛄', t:'ふえる まほう「ふくり」', s:'たんり と ふくり',
+  slides:[
+   {e:'➕', t:'「たんり」', b:'はじめの お金にだけ りそくが つく。10,000円に まいとし 5% なら、まいとし <b>500円ずつ</b> ふえる。'},
+   {e:'⛄', t:'「ふくり」', b:'ふえた お金にも また りそくが つく。<b>雪だるま</b> みたいに、ころがす ほど どんどん 大きく なる！'},
+   {e:'⏰', t:'時間が いちばんの みかた', b:'ふくりは <b>長い 時間</b> ほど 力を はっきする。はやく はじめて 長く つづける ことが だいじ。'},
+   {e:'7️⃣2️⃣', t:'「72の ほうそく」', b:'72 ÷ ふえる わりあい（%）＝ お金が 2ばいに なる 年数の めやす。5%なら 72÷5＝<b>やく14年</b>。'},
+  ],
+  act:'compound',
+  quiz:[
+   {q:'ふえた お金にも また りそくが つく しくみは？', c:['たんり','ふくり','ぎゃくり'], a:1, x:'「ふくり」は 雪だるまの ように ふえていくよ。'},
+   {q:'ふくりの 力を いちばん 生かすには？', c:['はやく はじめて 長く つづける','ときどき やめる','さいごに まとめて はじめる'], a:0, x:'時間が 長いほど、ふくりの 力は 大きく なる。'},
+   {q:'まいとし 6% ふえると、2ばいに なるのは やく 何年？（72の ほうそく）', c:['6年','12年','72年'], a:1, x:'72 ÷ 6 = 12年 だよ。'},
+  ]},
+ {id:'stock', e:'🏢', t:'会社 と 株', s:'株を もつと オーナーに',
+  slides:[
+   {e:'🏢', t:'会社って なに？', b:'人が あつまって、ものや サービスを つくり、<b>うって もうける</b> ところ。パンやさんも ゲーム会社も 会社だよ。'},
+   {e:'📜', t:'株（かぶ）って なに？', b:'会社を はじめたり 大きく したり するには お金が いる。そこで 会社は <b>株</b> を 出して、お金を あつめるんだ。'},
+   {e:'👑', t:'株を もつと「かぶぬし」', b:'株を かった人は、その会社の <b>小さな オーナー（かぶぬし）</b>。会社が もうかると「はいとう」という おすそわけが もらえる ことも ある。'},
+   {e:'📈📉', t:'株の ねだんは かわる', b:'会社が 人気に なると 株の ねだんは 上がり、うまく いかないと 下がる。<b>ふえる ことも へる ことも ある</b> んだ。'},
+  ],
+  act:'stock',
+  quiz:[
+   {q:'株を かうと、その会社の なにに なれる？', c:['社長','小さな オーナー（かぶぬし）','おきゃくさん だけ'], a:1, x:'株を もつ人を「かぶぬし」と いうよ。'},
+   {q:'会社の もうけの おすそわけを なんという？', c:['はいとう','おとしだま','ボーナス'], a:0, x:'かぶぬしが もらえる おすそわけが「はいとう（配当）」。'},
+   {q:'株の ねだんに ついて 正しいのは？', c:['ぜったい 上がる','ぜったい 下がる','上がる ことも 下がる ことも ある'], a:2, x:'会社の ようすや ニュースで、ねだんは 上がったり 下がったり するよ。'},
+  ]},
+ {id:'fund', e:'🧺', t:'投資信託って なに？', s:'みんなの お金を まとめて',
+  slides:[
+   {e:'🤔', t:'1つの会社だけは しんぱい', b:'1つの会社の 株だけ だと、その会社が ピンチに なったら お金が 大きく へって しまう。'},
+   {e:'🧺', t:'投資信託（とうし しんたく）', b:'たくさんの 人の お金を <b>1つの かごに まとめて</b>、プロが <b>たくさんの 会社</b> に わけて 投資する しくみ。少しの お金でも たくさんの 会社を もてるよ。'},
+   {e:'🌏', t:'インデックス型', b:'「日本の 大きな 会社 ぜんぶ」「世界中の 会社」の ように、<b>市場ぜんたいと 同じ うごき</b> を めざす 投資信託。手数料が やすい ものが 多い。'},
+   {e:'🏷️', t:'ねだん と 手数料', b:'投資信託の ねだんは「<b>きじゅん かがく</b>」と いうよ。もっている あいだ、<b>手数料（信託報酬）</b> が かかる。やすい ものを えらぶのが ポイント。'},
+  ],
+  act:'fund',
+  quiz:[
+   {q:'投資信託は どんな しくみ？', c:['1人で 1つの 会社を かう','みんなの お金を まとめて プロが たくさんの 会社に 投資','ぎんこうに あずける だけ'], a:1, x:'みんなの お金を 1つの かごに まとめて、たくさんの 会社に わけて 投資するよ。'},
+   {q:'たくさんの 会社に わける いい ところは？', c:['1つの 会社が ピンチでも えいきょうが 小さい','ぜったいに へらない','手数料が かからない'], a:0, x:'わける（ぶんさん）と、1つの ピンチの えいきょうが 小さく なる。でも へる ことは あるよ。'},
+   {q:'投資信託を もっている あいだ かかる お金は？', c:['しょうひぜい だけ','手数料（信託報酬）','なにも かからない'], a:1, x:'もっている あいだ「信託報酬」という 手数料が かかる。やすい ものを えらぼう。'},
+  ]},
+ {id:'way', e:'🧘', t:'長く・ぶんさん・つみたて', s:'投資の 3つの コツ',
+  slides:[
+   {e:'⚖️', t:'リスク と リターン', b:'ふえる かもしれない（<b>リターン</b>）ものは、へる かもしれない（<b>リスク</b>）ことも ある。リスク ゼロで たくさん ふえる ものは ないよ。'},
+   {e:'⏳', t:'コツ① 長く', b:'みじかい あいだは 上がったり 下がったり。でも <b>長い 目で みると</b> 世界の 会社は せいちょう してきた（これからも ぜったい では ないよ）。'},
+   {e:'🧺', t:'コツ② ぶんさん', b:'いろんな 会社・いろんな 国に <b>わけて</b> もつ。'},
+   {e:'📅', t:'コツ③ つみたて', b:'まいつき <b>同じ 金額</b> を かい つづける。ねだんが 高い 月は 少し、安い 月は たくさん かえるので、<b>タイミングに なやまなくて いい</b>。'},
+   {e:'🙅', t:'下がっても あわてない', b:'下がった ときに こわくて うると、そんが きまって しまう。<b>なくなっても こまらない お金</b> で 長く つづけよう。'},
+  ],
+  act:'tsumitate',
+  quiz:[
+   {q:'まいつき 同じ 金額を かい つづける やりかたは？', c:['つみたて','いっぱつ','ばくち'], a:0, x:'「つみたて」は ねだんの 上下に なやまず つづけられるよ。'},
+   {q:'つみたてで ねだんが 安い 月は？', c:['少ししか かえない','たくさん かえる','かえない'], a:1, x:'同じ 金額なら、安い ときほど たくさんの 数が かえるよ。'},
+   {q:'「リスクが ゼロで たくさん ふえる」話は？', c:['ほんとう','ない（あやしい）','ぎんこうに ある'], a:1, x:'ふえる ものには かならず へる リスクも ある。リスクゼロで 大きく ふえる 話は あやしいよ。'},
+  ]},
+ {id:'nisa', e:'🎁', t:'NISAって なに？', s:'ぜいきんが かからない しくみ',
+  slides:[
+   {e:'🏛️', t:'ぜいきん って なに？', b:'みんなが 国や 町に おさめる お金。<b>学校・道路・びょういん</b> など、みんなの ために つかわれるよ。'},
+   {e:'✂️', t:'投資の もうけにも ぜいきん', b:'ふつう、投資で もうかった お金には <b>やく20%</b> の ぜいきんが かかる。10,000円 もうかったら、やく 2,000円が ぜいきん。'},
+   {e:'🎁', t:'NISA（ニーサ）', b:'国が つくった「<b>投資の もうけに ぜいきんが かからない</b>」とくべつな 口座（こうざ）。10,000円 もうかったら 10,000円 まるごと じぶんの もの！'},
+   {e:'📋', t:'NISAの きまり（おとな）', b:'・<b>つみたて投資枠</b>：1年に 120万円まで<br>・<b>成長投資枠</b>：1年に 240万円まで<br>・ずっと もてる上限は ぜんぶで 1,800万円<br>・いまは 18さい以上が つかえる'},
+   {e:'🧒', t:'こどもも つかえる ように', b:'2027年から、こどもも NISAの つみたてが できる ように なる <b>予定</b> だよ。（くわしい ルールは おうちの人と たしかめよう）'},
+   {e:'⚠️', t:'わすれちゃ いけない こと', b:'NISAは「ぜいきんが かからない」しくみ で、<b>「ぜったい ふえる」しくみ では ない</b>。中に 入れる 投資信託は へる ことも あるよ。'},
+  ],
+  act:'nisa',
+  quiz:[
+   {q:'NISAの いちばんの とくちょうは？', c:['ぜったい ふえる','もうけに ぜいきんが かからない','お金が もらえる'], a:1, x:'もうけに かかる やく20%の ぜいきんが、NISAなら かからないよ。'},
+   {q:'ふつうの 口座で 10,000円 もうかったら、ぜいきんは やく いくら？', c:['やく 200円','やく 2,000円','やく 5,000円'], a:1, x:'もうけの やく20% なので、やく 2,000円 だよ。'},
+   {q:'NISAに 入れた 投資信託は…', c:['へる ことも ある','ぜったい へらない','2ばいに なる'], a:0, x:'NISAは ぜいきんの しくみ。中身の 投資信託は ふえる ことも へる ことも ある。'},
+  ]},
+ {id:'guard', e:'🛡️', t:'お金と じぶんを まもる', s:'サギ・しゃっきん・ほけん',
+  slides:[
+   {e:'🕵️', t:'サギに ちゅうい', b:'「<b>ぜったい もうかる</b>」「<b>いま だけ</b>」「<b>だれにも ないしょ</b>」は サギの あいことば。すぐ おうちの人に そうだん！'},
+   {e:'📱', t:'ネットの さそい', b:'SNSの「かんたんに かせげる」や、知らない人からの「当選しました」メールは あやしい。<b>リンクを おさない</b>。'},
+   {e:'💳', t:'しゃっきん と りそく', b:'お金を かりると、かえす ときに <b>りそくを たして</b> はらう。かえさないと どんどん ふえて しまうよ。'},
+   {e:'☂️', t:'ほけん', b:'みんなで 少しずつ お金を 出しあって、こまった 人を たすける しくみ。<b>大きな ピンチ</b> に そなえられる。'},
+  ],
+  act:'scam',
+  quiz:[
+   {q:'つぎの うち サギの あいことばは？', c:['ぜったい もうかる','ふえる ことも へる ことも ある','おうちの人と そうだん してね'], a:0, x:'「ぜったい もうかる」は サギの サイン。'},
+   {q:'お金を かりたら、かえす ときは？', c:['かりた 分だけ','りそくを たして かえす','かえさなくて いい'], a:1, x:'かりた お金には りそくが つくよ。'},
+   {q:'みんなで お金を 出しあって ピンチに そなえる しくみは？', c:['ほけん','ガチャ','たからくじ'], a:0, x:'「ほけん」は みんなで たすけあう しくみ だよ。'},
+  ]},
+ {id:'final', e:'🎓', t:'そつぎょう テスト', s:'ぜんぶの まとめ 10もん',
+  slides:[{e:'🎓', t:'さいごの テスト！', b:'ここまで まなんだ ことから <b>10もん</b> 出るよ。<b>8もん 以上</b> せいかいで そつぎょう！'}],
+  act:null, quiz:'final'},
+];
+
+const SC_KEY='okane_school';
+const scGet=()=>store.get(SC_KEY,{stars:{}});
+const scSet=v=>store.set(SC_KEY,v);
+const scUnlocked=i=>{ if(i===0) return true; const st=scGet().stars; return (st[SCHOOL[i-1].id]||0)>0; };
+
+function schoolMap(){
+  setHome(true);
+  const st=scGet().stars, cleared=SCHOOL.filter(c=>st[c.id]>0).length;
+  $app.innerHTML=`
+  <div class="card center" style="background:linear-gradient(135deg,#eff6ff,#ecfdf5)">
+    <div style="font-size:44px">📚</div>
+    <div style="font-weight:700;font-size:18px">おかねの がっこう</div>
+    <div class="small">お金って なに？ から NISA まで、じゅんばんに まなぼう</div>
+    <div class="progress" style="margin-top:10px"><div style="width:${cleared/SCHOOL.length*100}%"></div></div>
+    <div class="small" style="margin-top:4px">${cleared} / ${SCHOOL.length} クリア ・ ⭐ ${Object.values(st).reduce((a,b)=>a+b,0)}</div>
+  </div>
+  <div class="sc-path">${SCHOOL.map((c,i)=>{
+    const s=st[c.id]||0, open=scUnlocked(i), cur=open&&!s;
+    return `<button class="sc-node ${open?'':'lock'} ${cur?'cur':''} ${s?'done':''}" ${open?`onclick="schoolChapter(${i})"`:'disabled'} style="margin-left:${[0,40,70,40][i%4]}px">
+      <span class="sc-ic">${open?c.e:'🔒'}</span>
+      <span class="sc-tx"><small>${i===SCHOOL.length-1?'さいご':`だい ${i+1} しょう`}</small><b>${c.t}</b><small>${s?'⭐'.repeat(s)+'☆'.repeat(3-s):open?c.s:'まえの しょうを クリアしよう'}</small></span>
+    </button>`; }).join('')}</div>
+  ${st.final>0?`<button class="btn pink" onclick="schoolCert()">🎓 そつぎょう しょうしょを みる</button>`:''}
+  <button class="btn gray" onclick="goHome()">🏠 メニューへ</button>`;
+}
+
+function schoolChapter(i){
+  const c=SCHOOL[i]; let k=0;
+  setHome(true);
+  const draw=()=>{
+    const sl=c.slides[k];
+    $app.innerHTML=`
+    <div class="card">
+      <div class="small">${c.e} ${i===SCHOOL.length-1?'さいご':`だい ${i+1} しょう`}：${c.t}　<span style="float:right">${k+1}/${c.slides.length}</span></div>
+      <div class="sc-ill">${sl.e}</div>
+      <div class="sc-st">${sl.t}</div>
+      <div class="p-text sc-b">${sl.b}</div>
+      <div class="sc-dots">${c.slides.map((_,j)=>`<i class="${j===k?'on':''}"></i>`).join('')}</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn gray" style="flex:1" id="pv">${k?'◀ もどる':'🗺️ ちず'}</button>
+      <button class="btn" style="flex:2;margin-top:0" id="nx">${k<c.slides.length-1?'つぎへ ▶':c.act?'🎮 やってみよう！':'📝 テストへ'}</button>
+    </div>`;
+    document.getElementById('pv').onclick=()=>{ if(k){k--;draw();} else schoolMap(); };
+    document.getElementById('nx').onclick=()=>{ if(k<c.slides.length-1){k++;draw();window.scrollTo(0,0);} else if(c.act) schoolAct(i); else schoolQuiz(i); };
+  };
+  draw();
+}
+
+// ---------- ミニ体験 ----------
+function actFrame(i,title,body){
+  const c=SCHOOL[i];
+  $app.innerHTML=`<div class="card"><div class="small">${c.e} ${c.t}：たいけん</div><div class="sec-title" style="margin-top:6px">${title}</div><div id="act">${body}</div></div>
+  <button class="btn" id="actNext" disabled>📝 クイズへ ▶</button>`;
+  window.scrollTo(0,0);
+  const nx=document.getElementById('actNext'); nx.onclick=()=>schoolQuiz(i);
+  return ()=>{ nx.disabled=false; };
+}
+function schoolAct(i){
+  const id=SCHOOL[i].act; ACTS[id](i);
+}
+const ACTS={
+  barter(i){
+    const ok=actFrame(i,'🐟 さかなで パンを 手に いれよう！','<div id="bt"></div>');
+    const steps=[
+      {who:'🧑‍🍳 パンやさん',say:'さかな？ いらないよ。🥕 にんじんなら パンと こうかん するよ。'},
+      {who:'🧑‍🌾 はたけの 人',say:'さかなは いらない。👟 くつ が ほしいな。'},
+      {who:'👞 くつやさん',say:'さかな ほしい！ くつと こうかん しよう。'},
+    ];
+    let k=0;
+    const bt=document.getElementById('bt');
+    const draw=()=>{
+      if(k<steps.length){
+        const s=steps[k];
+        bt.innerHTML=`${k?`<div class="small">ここまで ${k}かい あるいた… 🚶</div>`:''}<div class="sc-bub"><b>${s.who}</b><br>${s.say}</div><button class="choice" id="go">${k===2?'🐟→👟 こうかん！ → にんじん → パン…':'つぎの 人に たのみに いく 🚶'}</button>`;
+        document.getElementById('go').onclick=()=>{k++;draw();};
+      } else if(k===steps.length){
+        bt.innerHTML=`<div class="sc-bub">👟→🥕→🍞 やっと パンが 手に はいった… <b>3かいも こうかん</b> して くたくた 😵</div><button class="choice" id="go">💴 お金が ある せかいで やってみる</button>`;
+        document.getElementById('go').onclick=()=>{k++;draw();};
+      } else {
+        bt.innerHTML=`<div class="sc-bub">🐟 さかなを うって <b>💴 お金</b> に → 💴 で 🍞 を かう。<b>2ステップで おしまい！</b></div><div class="lesson">💡 だれでも うけとる「お金」が あるから、<b>ほしい ものが すぐ 手に はいる</b>。これが お金の「こうかん」の やくわり。</div>`;
+        ok();
+      }
+    };
+    draw();
+  },
+  needwant(i){
+    const items=[['🍚','ごはん',0],['🎮','新しい ゲーム',1],['✏️','えんぴつ',0],['🍬','おかし',1],['👕','ふく',0],['🧸','ぬいぐるみ',1],['💊','くすり',0],['🃏','にんきの カード',1]];
+    const ok=actFrame(i,'「ひつよう」？「ほしい」？ わけてみよう',`<div id="nw">${items.map((it,k)=>`
+      <div class="sc-row" id="nw${k}"><span style="font-size:28px">${it[0]}</span><span style="flex:1;font-weight:700">${it[1]}</span>
+      <button class="sc-mini" data-k="${k}" data-v="0">ひつよう</button><button class="sc-mini" data-k="${k}" data-v="1">ほしい</button></div>`).join('')}</div><div id="nwr" class="center" style="margin-top:8px;font-weight:700"></div>`);
+    let done=0, right=0;
+    $app.querySelectorAll('.sc-mini').forEach(b=>b.onclick=()=>{
+      const k=+b.dataset.k, v=+b.dataset.v, row=document.getElementById('nw'+k);
+      if(row.dataset.done) return; row.dataset.done=1; done++;
+      const good=items[k][2]===v; if(good) right++;
+      row.querySelectorAll('.sc-mini').forEach(x=>{ if(+x.dataset.v===items[k][2]) x.classList.add('ok'); else if(x===b) x.classList.add('ng'); });
+      if(done===items.length){ document.getElementById('nwr').innerHTML=`${right} / ${items.length} せいかい！<div class="lesson" style="text-align:left">💡 ふくは「ひつよう」。でも <b>ブランドの 高い ふく</b> は「ほしい」かも。同じ ものでも かんがえかたで かわるよ。</div>`; ok(); }
+    });
+  },
+  goal(i){
+    const ok=actFrame(i,'🎯 もくひょう ちょきんを けいさんしよう',`
+      <div class="lbl">ほしい もの</div>
+      <div class="cnt" id="gw">${[['⚽','ボール',3000],['🎮','ゲーム',6000],['🚲','じてんしゃ',20000]].map((g,k)=>`<button data-p="${g[2]}" class="${k===1?'sel':''}">${g[0]}<br><small>${yen(g[2])}</small></button>`).join('')}</div>
+      <div class="lbl" style="margin-top:12px">まいつき ためる お金</div>
+      <input type="range" id="gm" min="100" max="3000" step="100" value="500" style="width:100%">
+      <div class="center" style="font-weight:700" id="gmv"></div>
+      <div class="sc-big" id="gr"></div><div id="gcoins" class="sc-coins"></div>`);
+    let price=6000, touched=0;
+    const calc=()=>{ const m=+document.getElementById('gm').value; const n=Math.ceil(price/m);
+      document.getElementById('gmv').textContent=yen(m)+' / 月';
+      document.getElementById('gr').innerHTML=`<b>${n}か月</b> で たまる！${n>=12?`<div class="small">（${Math.floor(n/12)}年${n%12?` ${n%12}か月`:''}）</div>`:''}`;
+      document.getElementById('gcoins').innerHTML='🪙'.repeat(Math.min(n,36))+(n>36?'…':'');
+      if(++touched>=3) ok(); };
+    document.getElementById('gm').oninput=calc;
+    $app.querySelectorAll('#gw button').forEach(b=>b.onclick=()=>{ price=+b.dataset.p; $app.querySelectorAll('#gw button').forEach(x=>x.classList.toggle('sel',x===b)); calc(); });
+    calc();
+    setTimeout(ok,4000);
+  },
+  compound(i){
+    const ok=actFrame(i,'⛄ たんり vs ふくり きょうそう！',`
+      <div class="small">10万円を まいとし 5% で ふやすと…</div>
+      <div class="sc-race"><div class="lbl">➕ たんり</div><div class="sc-bar"><div id="b1" style="background:#93c5fd"></div></div><div class="center" id="v1"></div>
+      <div class="lbl" style="margin-top:8px">⛄ ふくり</div><div class="sc-bar"><div id="b2" style="background:#34d399"></div></div><div class="center" id="v2"></div></div>
+      <div class="center" style="font-weight:700;font-size:18px;margin:8px 0" id="yr">0年</div>
+      <button class="choice" id="go" style="text-align:center">▶ 40年 すすめる</button><div id="cmsg"></div>`);
+    const P=100000, r=.05, maxV=P*Math.pow(1+r,40);
+    const set=y=>{ const a=P*(1+r*y), b=P*Math.pow(1+r,y);
+      document.getElementById('b1').style.width=a/maxV*100+'%'; document.getElementById('b2').style.width=b/maxV*100+'%';
+      document.getElementById('v1').textContent=yen(a); document.getElementById('v2').textContent=yen(b); document.getElementById('yr').textContent=y+'年'; };
+    set(0);
+    document.getElementById('go').onclick=e=>{ e.target.disabled=true; let y=0;
+      const tm=setInterval(()=>{ y++; set(y); if(y>=40){ clearInterval(tm);
+        document.getElementById('cmsg').innerHTML=`<div class="lesson">💡 40年で たんりは ${yen(P*(1+r*40))}、ふくりは <b>${yen(maxV)}</b>！ さいしょは ほとんど 同じ なのに、<b>あとに なるほど 大きな さ</b> が つくよ。</div>`; ok(); } },90); };
+  },
+  stock(i){
+    const ok=actFrame(i,'🥐 「もちもちベーカリー」の 株を かってみよう',`
+      <div class="sc-row"><span style="font-size:32px">🥐</span><span style="flex:1"><b>もちもちベーカリー</b><br><span class="small">1株の ねだん</span></span><span class="sc-price" id="sp">1,000円</span></div>
+      <div class="sc-chart" id="sch"></div>
+      <div id="snews"></div><button class="choice" id="go" style="text-align:center">💴 1株 かう（1,000円）</button>`);
+    let price=1000, k=-1, div=0; const hist=[1000];
+    const news=[['🍈','新しい メロンパンが 大ヒット！',.3],['🌾','こむぎの ねだんが 上がって もうけが へった…',-.15],['🎁','もうけの おすそわけ「はいとう」が 30円 もらえた！',0,30],['🏪','お店が 2つ ふえた！',.2]];
+    const chart=()=>{ const mx=Math.max(...hist)*1.1; document.getElementById('sch').innerHTML=hist.map(v=>`<div style="height:${v/mx*100}%" title="${v}"></div>`).join(''); };
+    chart();
+    document.getElementById('go').onclick=()=>{
+      k++;
+      if(k===0){ document.getElementById('snews').innerHTML='<div class="sc-bub">👑 これで きみも <b>かぶぬし</b>（小さな オーナー）！ ニュースを 見てみよう。</div>'; document.getElementById('go').textContent='📰 つぎの ニュース'; return; }
+      const n=news[k-1]; price=Math.round(price*(1+n[2])); if(n[3]) div+=n[3]; hist.push(price); chart();
+      document.getElementById('sp').textContent=yen(price);
+      document.getElementById('snews').innerHTML=`<div class="sc-bub">${n[0]} ${n[1]}<br><b class="${n[2]>=0?'up':'down'}">${n[2]?`ねだん ${n[2]>0?'+':''}${Math.round(n[2]*100)}%`:'ねだんは そのまま'}</b></div>`;
+      if(k>=news.length){ document.getElementById('go').remove();
+        document.getElementById('snews').innerHTML+=`<div class="lesson">💡 1,000円で かった 株が いまは <b>${yen(price)}</b>、はいとうも ${yen(div)}。でも とちゅうで <b>下がった ときも あった</b> よね。株は ニュースで 上がったり 下がったり するんだ。</div>`; ok(); }
+    };
+  },
+  fund(i){
+    const cos=['🎮','🚗','🍔','💊','📱','✈️','🏠','👕','⚡','🍫'];
+    const ok=actFrame(i,'🧺 1つの 会社 vs 投資信託',`
+      <div class="sc-two"><div class="card" style="margin:0;padding:10px"><div class="center"><b>A</b> 1つだけ</div><div class="sc-basket">🎮</div><div class="center sc-price" id="fa">10,000円</div></div>
+      <div class="card" style="margin:0;padding:10px"><div class="center"><b>B</b> 投資信託</div><div class="sc-basket" id="fbk">${cos.join('')}</div><div class="center sc-price" id="fb">10,000円</div></div></div>
+      <div id="fnews" style="margin-top:10px"></div><button class="choice" id="go" style="text-align:center">📰 ニュースを 見る</button>`);
+    let a=10000,b=10000,k=0;
+    const ev=[['🎮💥','ゲーム会社で 大トラブル！ ゲーム会社の 株が 半分に…',-.5,-.05],['🌏📈','世界中の 会社が せいちょう！ どの会社も 少しずつ 上がった',.1,.1],['🎮🎉','ゲーム会社が 大ヒット作で ふっかつ！',.4,.04]];
+    document.getElementById('go').onclick=()=>{
+      const e=ev[k++]; a=Math.round(a*(1+e[2])); b=Math.round(b*(1+e[3]));
+      document.getElementById('fa').innerHTML=`<span class="${e[2]>=0?'up':'down'}">${yen(a)}</span>`; document.getElementById('fb').innerHTML=`<span class="${e[3]>=0?'up':'down'}">${yen(b)}</span>`;
+      document.getElementById('fnews').innerHTML=`<div class="sc-bub">${e[0]} ${e[1]}<br><span class="small">A：${e[2]>0?'+':''}${Math.round(e[2]*100)}%　B：${e[3]>0?'+':''}${Math.round(e[3]*100)}%</span></div>`;
+      if(k>=ev.length){ document.getElementById('go').remove();
+        document.getElementById('fnews').innerHTML+=`<div class="lesson">💡 A は <b>大きく 上下</b>して ハラハラ。B は 10社に わけているので、1社の トラブルの えいきょうが <b>10分の1</b>。これが <b>ぶんさん</b> の 力だよ。</div>`; ok(); }
+    };
+  },
+  tsumitate(i){
+    const prices=[1000,800,500,700,1000,1200];
+    const ok=actFrame(i,'📅 まいつき 1,000円ずつ かってみよう',`
+      <div class="small">ある 投資信託の 1くち（1こ分）の ねだんが 毎月 かわるよ。まいつき <b>1,000円ぶん</b> かう。</div>
+      <table class="ptable" id="tt"><tr><td>月</td><td>ねだん</td><td>かえた かず</td></tr></table>
+      <button class="choice" id="go" style="text-align:center">🛒 1か月め：1,000円ぶん かう</button><div id="tmsg"></div>`);
+    let m=0, units=0;
+    document.getElementById('go').onclick=()=>{
+      const p=prices[m], u=1000/p; units+=u; m++;
+      document.getElementById('tt').insertAdjacentHTML('beforeend',`<tr><td>${m}月</td><td>${yen(p)}</td><td><b>${u.toFixed(2)}</b> くち ${p<1000?'🎉':''}</td></tr>`);
+      if(m<prices.length){ document.getElementById('go').textContent=`🛒 ${m+1}か月め：1,000円ぶん かう`; return; }
+      document.getElementById('go').remove();
+      const last=prices[prices.length-1], val=units*last, lump=6000/prices[0]*last;
+      document.getElementById('tmsg').innerHTML=`<div class="result-line"><span>つみたて：${units.toFixed(2)}くち × ${yen(last)}</span><b class="up">${yen(val)}</b></div>
+        <div class="result-line"><span>1月に 6,000円 まとめて かったら</span><b>${yen(lump)}</b></div>
+        <div class="lesson">💡 ねだんが <b>下がった 月に たくさん かえた</b> から、つみたての ほうが 多く なったね。下がった ときは「たくさん かえる チャンス」でも あるんだ。（いつも こう なるとは かぎらないよ）</div>`; ok();
+    };
+  },
+  nisa(i){
+    const ok=actFrame(i,'🎁 NISAで いくら ちがう？',`
+      <div class="lbl">投資で もうかった お金</div>
+      <input type="range" id="np" min="1000" max="1000000" step="1000" value="10000" style="width:100%">
+      <div class="center" style="font-weight:700;font-size:18px" id="npv"></div>
+      <div class="sc-two" style="margin-top:10px">
+        <div class="card" style="margin:0;padding:10px;text-align:center"><b>ふつうの 口座</b><div class="small">ぜいきん やく20%</div><div class="sc-price down" id="nt"></div><div class="small">てもとに</div><div class="sc-price" id="nk"></div></div>
+        <div class="card" style="margin:0;padding:10px;text-align:center;background:#ecfdf5"><b>NISA 🎁</b><div class="small">ぜいきん 0円</div><div class="sc-price up">0円</div><div class="small">てもとに</div><div class="sc-price up" id="nn"></div></div>
+      </div><div class="small" style="margin-top:6px">※ ぜいきんは 20.315%（所得税・復興特別所得税・住民税）で けいさん</div>`);
+    let n=0;
+    const calc=()=>{ const v=+document.getElementById('np').value, tax=Math.floor(v*.20315);
+      document.getElementById('npv').textContent=yen(v);
+      document.getElementById('nt').textContent='−'+yen(tax); document.getElementById('nk').textContent=yen(v-tax); document.getElementById('nn').textContent=yen(v);
+      if(++n>=3) ok(); };
+    document.getElementById('np').oninput=calc; calc(); setTimeout(ok,4000);
+  },
+  scam(i){
+    const msgs=[['📩','「ぜったい もうかる 投資が あるよ！ いま だけ、ないしょでね」',1],['🏦','ぎんこうの 人が「りそくは 1年で 0.2%です」と せつめい してくれた',0],['📱','「当選しました！ 賞金を うけとるには 手数料 3,000円を はらってね」',1],['👨‍👩‍👧','おうちの人と いっしょに、NISAの せつめいを 読んだ',0],['💬','SNSで「スマホだけで 1日1万円 かせげる」',1]];
+    const ok=actFrame(i,'🕵️ あやしい？ あんしん？',`${msgs.map((m,k)=>`<div class="sc-row" id="sm${k}" style="flex-wrap:wrap"><span style="font-size:24px">${m[0]}</span><span style="flex:1;font-size:13px">${m[1]}</span>
+      <div style="width:100%;display:flex;gap:6px;margin-top:4px"><button class="sc-mini" style="flex:1" data-k="${k}" data-v="1">🚨 あやしい</button><button class="sc-mini" style="flex:1" data-k="${k}" data-v="0">🙆 あんしん</button></div></div>`).join('')}<div id="smr" class="center" style="font-weight:700"></div>`);
+    let d=0,r=0;
+    $app.querySelectorAll('.sc-mini').forEach(b=>b.onclick=()=>{ const k=+b.dataset.k,v=+b.dataset.v,row=document.getElementById('sm'+k); if(row.dataset.done) return; row.dataset.done=1; d++;
+      if(msgs[k][2]===v) r++; row.querySelectorAll('.sc-mini').forEach(x=>{ if(+x.dataset.v===msgs[k][2]) x.classList.add('ok'); else if(x===b) x.classList.add('ng'); });
+      if(d===msgs.length){ document.getElementById('smr').innerHTML=`${r} / ${msgs.length} みやぶった！<div class="lesson" style="text-align:left">💡「ぜったい」「いま だけ」「ないしょ」「手数料を はらって」が 出たら <b>ストップ！ おうちの人に そうだん</b>。</div>`; ok(); } });
+  },
+};
+
+// ---------- クイズ ----------
+function schoolQuiz(i){
+  const c=SCHOOL[i];
+  const qs = c.quiz==='final' ? shuffle(SCHOOL.slice(0,-1).flatMap(x=>x.quiz)).slice(0,10) : c.quiz;
+  let k=0, score=0;
+  const need = c.quiz==='final' ? 8 : 2;
+  const draw=()=>{
+    const q=qs[k];
+    $app.innerHTML=`<div class="card">
+      <div class="q-num">${c.e} ${c.t}　クイズ ${k+1} / ${qs.length}</div>
+      <div class="progress"><div style="width:${k/qs.length*100}%"></div></div>
+      <div class="q-text">${q.q}</div>
+      <div id="cs">${q.c.map((t,j)=>`<button class="choice" data-j="${j}">${'ABC'[j]}. ${t}</button>`).join('')}</div><div id="ex"></div></div>`;
+    window.scrollTo(0,0);
+    let ans=false;
+    $app.querySelectorAll('#cs .choice').forEach(b=>b.onclick=()=>{ if(ans) return; ans=true;
+      const j=+b.dataset.j, okk=j===q.a; if(okk) score++;
+      $app.querySelectorAll('#cs .choice').forEach((x,m)=>{ if(m===q.a) x.classList.add('ok'); else if(m===j) x.classList.add('ng'); });
+      document.getElementById('ex').innerHTML=`<div class="center" style="font-size:20px;font-weight:700;margin-top:10px;color:${okk?'#059669':'#dc2626'}">${okk?'⭕ せいかい！':'❌ ざんねん'}</div><div class="lesson">💡 ${q.x}</div><button class="btn" id="qn" style="margin-top:12px">${k+1<qs.length?'つぎへ ▶':'けっかへ'}</button>`;
+      document.getElementById('qn').onclick=()=>{ k++; if(k<qs.length) draw(); else result(); };
+    });
+  };
+  const result=()=>{
+    const pass=score>=need;
+    const stars = c.quiz==='final' ? (score===10?3:score>=9?2:pass?1:0) : (score===3?3:score===2?2:0);
+    const sv=scGet(); const prev=sv.stars[c.id]||0; if(stars>prev){ sv.stars[c.id]=stars; scSet(sv); }
+    if(pass) confetti();
+    const next=SCHOOL[i+1];
+    const tip = {way:'🌱 「つみたて チャレンジ」で 12年間 ためして みよう！', guard:'🎲 「おかね すごろく」で サギや ピンチを たいけん しよう！'}[c.id];
+    $app.innerHTML=`<div class="card center">
+      <div style="font-size:56px">${pass?(c.quiz==='final'?'🎓':'🎉'):'💪'}</div>
+      <div style="font-size:22px;font-weight:700;margin:6px 0">${score} / ${qs.length} もん せいかい</div>
+      <div style="font-size:26px">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+      <div class="p-text" style="margin-top:6px">${pass?(c.quiz==='final'?'そつぎょう おめでとう！ きみは おかね はかせ だ！':'クリア！ つぎの しょうが ひらいたよ'):`${need}もん 以上 せいかいで クリア。もう1回 よんでから ちょうせん しよう！`}</div>
+      ${pass&&tip?`<div class="lesson" style="text-align:left">${tip}</div>`:''}
+    </div>
+    ${pass&&c.quiz==='final'?`<button class="btn pink" onclick="schoolCert()">🎓 そつぎょう しょうしょを もらう</button>`:''}
+    ${pass&&next?`<button class="btn" onclick="schoolChapter(${i+1})">▶ だい ${i+2} しょう「${next.t}」へ</button>`:''}
+    ${!pass?`<button class="btn" onclick="schoolChapter(${i})">📖 もう1回 よむ</button><button class="btn" onclick="schoolQuiz(${i})">🔁 クイズだけ もう1回</button>`:''}
+    <button class="btn gray" onclick="schoolMap()">🗺️ ちずに もどる</button>`;
+    window.scrollTo(0,0);
+  };
+  draw();
+}
+
+function schoolCert(){
+  setHome(true);
+  const name=store.get('okane_name','')||'きみ';
+  const st=scGet().stars, total=Object.values(st).reduce((a,b)=>a+b,0);
+  const d=new Date();
+  confetti();
+  $app.innerHTML=`<div class="sc-cert">
+    <div style="font-size:13px;letter-spacing:.3em;color:#b45309">そつぎょう しょうしょ</div>
+    <div style="font-size:46px;margin:6px 0">🎓</div>
+    <div style="font-size:22px;font-weight:700">${esc(name)} さん</div>
+    <div class="p-text" style="margin:12px 0;line-height:2">あなたは「おかねの がっこう」で<br>お金の やくわり・ためかた・ふくり・株・<br>投資信託・NISA・お金の まもりかた を<br>しっかり まなび ました。<br><b>ここに「おかね はかせ」と みとめます。</b></div>
+    <div style="font-size:22px">⭐ ${total} / ${SCHOOL.length*3}</div>
+    <div class="small" style="margin-top:8px">${d.getFullYear()}年 ${d.getMonth()+1}月 ${d.getDate()}日　おかねの がっこう</div>
+  </div>
+  <div class="small center" style="margin-bottom:10px">📸 スクリーンショットで ほぞん できるよ</div>
+  <button class="btn gray" onclick="schoolMap()">🗺️ ちずに もどる</button>`;
+}
+
 goHome();
 </script>
 <style>
@@ -1111,6 +1556,9 @@ goHome();
 .op-start.show{opacity:1;pointer-events:auto;animation:opbeat 1s ease-in-out infinite;}
 @keyframes opbeat{50%{transform:translateX(-50%) scale(1.08)}}
 .op-skip{position:absolute;right:14px;top:max(14px,env(safe-area-inset-top));padding:6px 12px;border:none;border-radius:14px;background:rgba(255,255,255,.3);color:#fff;font-family:inherit;font-size:12px;cursor:pointer;z-index:2;}
+.op-3d{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;}
+.op.op3d .op-stars,.op.op3d .op-sun,.op.op3d .op-stage,.op.op3d .op-chars{display:none;}
+.op.op3d .op-cap,.op.op3d .op-song{text-shadow:0 2px 6px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.4);}
 @media (prefers-reduced-motion: reduce){.op *{animation-duration:.01s!important;transition-duration:.01s!important;}}
 </style>
 <script>
@@ -1180,7 +1628,224 @@ function scheduleSong(ctx, t0, {lead=1}={}){
   kick(tf+.3); hit(tf+.3,.3,800,1.2);
 }
 
-let OP_AUDIO=null;
+// ===== 3D オープニング（three.js）=====
+const THREE_URL='https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';
+let THREE_PROMISE=null;
+function loadThree(){
+  if(window.THREE) return Promise.resolve(true);
+  if(THREE_PROMISE) return THREE_PROMISE;
+  THREE_PROMISE=new Promise(res=>{
+    const s=document.createElement('script'); s.src=THREE_URL; s.async=true;
+    s.onload=()=>res(!!window.THREE); s.onerror=()=>res(false);
+    document.head.appendChild(s);
+    setTimeout(()=>res(!!window.THREE),6000);
+  });
+  return THREE_PROMISE;
+}
+function webglOK(){ try{ const c=document.createElement('canvas'); return !!(c.getContext('webgl2')||c.getContext('webgl')); }catch(e){ return false; } }
+
+const clamp01=x=>Math.max(0,Math.min(1,x));
+const smooth=(a,b,x)=>{ const t=clamp01((x-a)/(b-a)); return t*t*(3-2*t); };
+const easeBack=x=>{ x=clamp01(x); const c1=1.70158,c3=c1+1; return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2); };
+const easeBounce=x=>{ x=clamp01(x); const n=7.5625,d=2.75;
+  if(x<1/d) return n*x*x; if(x<2/d) return n*(x-=1.5/d)*x+.75; if(x<2.5/d) return n*(x-=2.25/d)*x+.9375; return n*(x-=2.625/d)*x+.984375; };
+const lerp=(a,b,t)=>a+(b-a)*t;
+
+function make3D(container){
+  const T=window.THREE;
+  const renderer=new T.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(2,window.__opPR||window.devicePixelRatio||1));
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
+  renderer.domElement.className='op-3d';
+  container.insertBefore(renderer.domElement, container.firstChild);
+  const scene=new T.Scene();
+  const night=new T.Color('#1e1b4b'), dusk=new T.Color('#7c3aed'), day=new T.Color('#8fd8fb'), bg=new T.Color();
+  scene.background=bg; scene.fog=new T.Fog(bg.clone(),28,70);
+  const cam=new T.PerspectiveCamera(50,1,.1,200);
+  const hemi=new T.HemisphereLight('#ffffff','#4d7c0f',.5); scene.add(hemi);
+  const sunL=new T.DirectionalLight('#fff4d6',1.3);
+  sunL.position.set(6,12,6); sunL.castShadow=true; sunL.shadow.mapSize.set(1024,1024);
+  Object.assign(sunL.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:1,far:40}); sunL.shadow.bias=-.002;
+  scene.add(sunL);
+  const lam=(c,o={})=>new T.MeshLambertMaterial({color:c,flatShading:true,...o});
+  const mesh=(g,m,sh=true)=>{ const x=new T.Mesh(g,m); x.castShadow=sh; x.receiveShadow=true; return x; };
+
+  // 地面（ローポリの おか）
+  const hill=(x,z)=>{ const r=Math.hypot(x,z); return -(x*x+z*z)/90 + .3*Math.sin(x*.7+1)*Math.cos(z*.6)*smooth(2,6,r); };
+  const gg=new T.PlaneGeometry(120,120,70,70); gg.rotateX(-Math.PI/2);
+  const pos=gg.attributes.position;
+  for(let i=0;i<pos.count;i++) pos.setY(i,hill(pos.getX(i),pos.getZ(i)));
+  gg.computeVertexNormals();
+  const ground=mesh(gg,lam('#4ade80'),false); scene.add(ground);
+  // くさ・はな・いし（おくゆき感）
+  const deco=new T.Group(); scene.add(deco);
+  for(let i=0;i<60;i++){
+    const a=Math.random()*Math.PI*2, r=2.2+Math.random()*12;
+    const x=Math.cos(a)*r, z=Math.sin(a)*r, y=hill(x,z);
+    let m;
+    if(i%5===0){ m=mesh(new T.DodecahedronGeometry(.18+Math.random()*.2,0),lam('#94a3b8')); }
+    else if(i%3===0){ m=new T.Group();
+      const st=mesh(new T.CylinderGeometry(.02,.02,.35,5),lam('#15803d')); st.position.y=.17; m.add(st);
+      const fl=mesh(new T.IcosahedronGeometry(.11,0),lam(['#f472b6','#facc15','#ffffff','#a78bfa'][i%4])); fl.position.y=.36; m.add(fl); }
+    else { m=mesh(new T.ConeGeometry(.08,.35+Math.random()*.25,4),lam('#22c55e')); m.position.y=.15; }
+    const g=new T.Group(); g.add(m); g.position.set(x,y,z); deco.add(g);
+  }
+  // ほし
+  const sg=new T.BufferGeometry(), sp=[];
+  for(let i=0;i<400;i++){ const a=Math.random()*Math.PI*2, e=Math.random()*1.2+.05, r=60; sp.push(Math.cos(a)*Math.cos(e)*r, Math.sin(e)*r, Math.sin(a)*Math.cos(e)*r); }
+  sg.setAttribute('position',new T.Float32BufferAttribute(sp,3));
+  const starM=new T.PointsMaterial({color:'#ffffff',size:.5,transparent:true,fog:false});
+  scene.add(new T.Points(sg,starM));
+  // たいよう
+  const sunBall=new T.Mesh(new T.SphereGeometry(2.2,24,16),new T.MeshBasicMaterial({color:'#fde047',fog:false}));
+  const glow=new T.Mesh(new T.SphereGeometry(3.4,24,16),new T.MeshBasicMaterial({color:'#fef08a',transparent:true,opacity:.35,fog:false}));
+  sunBall.add(glow); scene.add(sunBall);
+  // くも
+  const clouds=new T.Group(); scene.add(clouds);
+  for(let i=0;i<6;i++){ const c=new T.Group();
+    for(let k=0;k<4;k++){ const b=new T.Mesh(new T.IcosahedronGeometry(1+Math.random()*.6,1),new T.MeshLambertMaterial({color:'#ffffff',flatShading:true,transparent:true,opacity:.95}));
+      b.position.set(k*1.1-1.6,Math.random()*.4,Math.random()*.6); c.add(b); }
+    const a=i/6*Math.PI*2; c.position.set(Math.cos(a)*30,10+Math.random()*5,Math.sin(a)*30); c.lookAt(0,c.position.y,0); clouds.add(c); }
+
+  // たね
+  const seed=mesh(new T.SphereGeometry(.32,16,12),lam('#92400e')); seed.scale.set(1,.85,1); scene.add(seed);
+  const seedCap=mesh(new T.SphereGeometry(.2,12,8,0,Math.PI*2,0,Math.PI/2),lam('#78350f')); seedCap.position.y=.18; seed.add(seedCap);
+  // め
+  const sprout=new T.Group(); scene.add(sprout);
+  const stem=mesh(new T.CylinderGeometry(.04,.05,1,6),lam('#65a30d')); stem.geometry.translate(0,.5,0); sprout.add(stem);
+  const leafG=new T.SphereGeometry(.28,10,8); leafG.scale(1,.25,.55);
+  const leafL=mesh(leafG,lam('#84cc16')); leafL.position.set(-.25,1,0); leafL.rotation.z=.4; sprout.add(leafL);
+  const leafR=mesh(leafG,lam('#84cc16')); leafR.position.set(.25,1,0); leafR.rotation.z=-.4; sprout.add(leafR);
+  // 木
+  const tree=new T.Group(); scene.add(tree);
+  const trunkG=new T.CylinderGeometry(.22,.38,1,8); trunkG.translate(0,.5,0);
+  const trunk=mesh(trunkG,lam('#8b5a2b')); tree.add(trunk);
+  const crown=new T.Group(); tree.add(crown);
+  const leafCols=['#16a34a','#22c55e','#15803d','#4ade80','#16a34a'];
+  [[0,0,0,1.25],[.9,-.25,.3,.85],[-.85,-.2,.2,.9],[.2,.3,-.8,.85],[-.2,.55,.6,.8]].forEach(([x,y,z,r],i)=>{
+    const b=mesh(new T.IcosahedronGeometry(r,1),lam(leafCols[i])); b.position.set(x,y,z); crown.add(b); });
+  // りんご
+  const apples=[];
+  [[1.1,.1,.8],[-1.2,.2,.6],[.3,-.5,1.2],[-.5,.7,1],[1,.7,-.4],[-.9,-.3,-.9],[.5,1.2,.3],[.1,.1,-1.3]].forEach(p=>{
+    const a=new T.Group();
+    const b=mesh(new T.SphereGeometry(.24,12,10),new T.MeshPhongMaterial({color:'#ff3b3b',emissive:'#5a0a0a',shininess:70})); a.add(b);
+    const st=mesh(new T.CylinderGeometry(.015,.015,.12,4),lam('#713f12')); st.position.y=.22; a.add(st);
+    a.position.set(...p); a.scale.setScalar(0); crown.add(a); apples.push(a); });
+  // コイン
+  const coinG=new T.CylinderGeometry(.32,.32,.07,28); coinG.rotateX(Math.PI/2);
+  const coinM=new T.MeshPhongMaterial({color:'#fbbf24',emissive:'#7c4a03',specular:'#fff7cc',shininess:90});
+  const coins=[];
+  for(let i=0;i<18;i++){ const c=mesh(coinG,coinM); c.visible=false;
+    c.userData={x:(Math.random()-.5)*4,z:(Math.random()-.5)*4,delay:i*.11,spin:3+Math.random()*4}; scene.add(c); coins.push(c); }
+  // まわる コイン（みのった あと）
+  const orbit=new T.Group(); scene.add(orbit);
+  for(let i=0;i<6;i++){ const c=mesh(coinG,coinM); const a=i/6*Math.PI*2; c.position.set(Math.cos(a)*2.4,0,Math.sin(a)*2.4); orbit.add(c); }
+  orbit.visible=false;
+  // グラフ（下がって 上がる）
+  const chart=new T.Group(); scene.add(chart);
+  const cp=[[-2.6,0],[-1.9,.35],[-1.2,.7],[-.6,.5],[0,-.25],[.6,.75],[1.3,1.25],[1.95,1.7],[2.6,2.25]].map(([x,y])=>new T.Vector3(x,y,0));
+  const curve=new T.CatmullRomCurve3(cp,false,'catmullrom',.1);
+  const tubeG=new T.TubeGeometry(curve,160,.07,8,false);
+  const tubeM=new T.MeshBasicMaterial({color:'#ffffff',transparent:true});
+  const tube=new T.Mesh(tubeG,tubeM); chart.add(tube);
+  const head=new T.Mesh(new T.SphereGeometry(.14,12,10),new T.MeshBasicMaterial({color:'#fde047',transparent:true})); chart.add(head);
+  const axisM=new T.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.5});
+  const axis=new T.Mesh(new T.BoxGeometry(5.4,.03,.03),axisM); axis.position.set(0,-.6,0); chart.add(axis);
+  const tubeIdx=tubeG.index.count;
+  // どうぶつ（えもじ スプライト）
+  const animals=['🐰','🐻','🐱','🐶','🦊'].map((e,i)=>{
+    const cv=document.createElement('canvas'); cv.width=cv.height=128; const cx=cv.getContext('2d');
+    cx.font='100px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText(e,64,70);
+    const tx=new T.CanvasTexture(cv); tx.colorSpace=T.SRGBColorSpace;
+    const s=new T.Sprite(new T.SpriteMaterial({map:tx,transparent:true})); s.scale.set(.9,.9,.9); s.visible=false; scene.add(s); return s; });
+
+  const groundY=hill;
+  const growth=t=>{ // 木の そだち 0〜1
+    let g=0;
+    [[lineStart(1)+.9,.12],[lineStart(1)+1.9,.13],[lineStart(1)+2.9,.15],[lineStart(3)+.3,.6]].forEach(([t0,amt])=>{ g+=amt*easeBack((t-t0)/.7); });
+    return g;
+  };
+  const camKeys=[ // [時間, 半径, 高さ, 見る高さ]
+    [0,7,2.2,.6],[4.5,7.5,2.4,.9],[8.6,9,2.8,1.4],[9.4,11,3.4,2.3],[12.8,11.5,3.4,2.5],[14.2,14,3.4,3],[17,15.5,3.4,3],[22,16.5,3.6,3]];
+  const camAt=t=>{ let i=0; while(i<camKeys.length-2 && t>camKeys[i+1][0]) i++;
+    const a=camKeys[i], b=camKeys[i+1], k=smooth(a[0],b[0],t); return [lerp(a[1],b[1],k),lerp(a[2],b[2],k),lerp(a[3],b[3],k)]; };
+
+  function update(t){
+    // そら
+    const d1=smooth(1.2,2.6,t), d2=smooth(2.2,4.2,t);
+    bg.copy(night).lerp(dusk,d1*(1-d2)).lerp(day,d2); scene.fog.color.copy(bg);
+    starM.opacity=1-smooth(1.8,3.4,t);
+    const sa=lerp(-.25,1.05,smooth(1.2,4.5,t));
+    sunBall.position.set(14,Math.sin(sa)*26-3,-30);
+    sunL.intensity=.25+1.15*d2; hemi.intensity=.25+.45*d2;
+    clouds.rotation.y=t*.02;
+    // たね
+    const fall=easeBounce((t-.2)/1.1);
+    seed.visible=t<lineStart(1)+1.3;
+    seed.position.set(0,lerp(9,.25,fall),0); seed.rotation.z=(1-fall)*6;
+    if(t>lineStart(1)+.8) seed.scale.setScalar(Math.max(0,1-(t-lineStart(1)-.8)/.5));
+    else seed.scale.set(1,.85,1);
+    // コイン
+    coins.forEach(c=>{ const u=c.userData, s=lineStart(1)+u.delay, k=(t-s)/1.0;
+      c.visible=k>0&&k<1.25;
+      if(!c.visible) return;
+      const f=Math.min(1,k);
+      c.position.set(u.x*(1-f*.85),lerp(10,.3,f*f),u.z*(1-f*.85));
+      c.rotation.set(t*u.spin,t*u.spin*.7,0);
+      c.scale.setScalar(k>1?Math.max(0,1-(k-1)*4):1); });
+    // め と 木
+    const g=growth(t);
+    const sproutK=clamp01(g/.12);
+    sprout.visible=g>0.001 && g<.42;
+    sprout.scale.setScalar(.2+.8*sproutK*(1-smooth(.3,.42,g)));
+    const tg=smooth(.25,1,g);
+    tree.visible=g>.25;
+    trunk.scale.set(.4+.6*tg,.3+2.5*tg,.4+.6*tg);
+    crown.position.y=.3+2.5*tg+.7*tg;
+    crown.scale.setScalar(.25+1.05*tg);
+    crown.rotation.y=Math.sin(t*.8)*.05;
+    // グラフ
+    const cs=lineStart(2), ce=lineStart(3)+.2;
+    const cv=t>cs-.2 && t<ce+.8;
+    chart.visible=cv;
+    if(cv){
+      const p=clamp01((t-cs)/2.8);
+      tubeG.setDrawRange(0,Math.floor(tubeIdx*p/3)*3);
+      head.position.copy(curve.getPointAt(Math.max(.001,p)));
+      const op=1-smooth(ce,ce+.7,t); tubeM.opacity=op; head.material.opacity=op; axisM.opacity=.5*op;
+      chart.position.set(0,3.6,0); chart.scale.setScalar(.85);
+      chart.quaternion.copy(cam.quaternion);
+    }
+    // りんご と まわる コイン
+    apples.forEach((a,i)=>a.scale.setScalar(easeBack((t-(lineStart(3)+2)-i*.09)/.5)));
+    orbit.visible=t>lineStart(3)+2.1;
+    orbit.position.y=2.4; orbit.rotation.y=t*.9;
+    orbit.children.forEach((c,i)=>{ c.rotation.y=t*3+i; c.position.y=Math.sin(t*2+i)*.4; c.scale.setScalar(easeBack((t-(lineStart(3)+2.1)-i*.06)/.5)); });
+    animals.forEach((s,i)=>{ s.visible=t>SONG_END+.9+i*.12; });
+    // カメラ（ゆっくり まわりこむ）
+    const [r,h,ly]=camAt(t), th=.35+t*.11;
+    cam.position.set(Math.sin(th)*r,h,Math.cos(th)*r);
+    cam.lookAt(0,ly,0);
+    // どうぶつは カメラの 前に ならぶ
+    if(t>SONG_END+.5){ const fwd=new T.Vector3(Math.sin(th),0,Math.cos(th)), side=new T.Vector3(fwd.z,0,-fwd.x);
+      animals.forEach((s,i)=>{ if(!s.visible) return; const k=clamp01((t-(SONG_END+.9+i*.12))/.9);
+        const tx=(i-2)*1.0, off=lerp(10,tx,1-Math.pow(1-k,3)), base=fwd.clone().multiplyScalar(3.2).add(side.clone().multiplyScalar(-off));
+        s.position.x=base.x; s.position.z=base.z; s.position.y=groundY(base.x,base.z)+.5+Math.abs(Math.sin(t*6+i))*(k<1?.5:.25); }); }
+  }
+  function resize(){ const w=container.clientWidth, h=container.clientHeight; renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
+  resize(); window.addEventListener('resize',resize);
+  let raf=0, t0=null, dead=false;
+  const loop=()=>{ if(dead) return; raf=requestAnimationFrame(loop);
+    const t=t0==null?0:(performance.now()-t0)/1000; update(t); renderer.render(scene,cam); };
+  update(0); renderer.render(scene,cam);
+  return {
+    start(){ t0=performance.now(); loop(); },
+    renderAt(t){ update(t); renderer.render(scene,cam); },
+    dispose(){ dead=true; cancelAnimationFrame(raf); window.removeEventListener('resize',resize); renderer.dispose(); renderer.domElement.remove(); }
+  };
+}
+
+let OP_AUDIO=null, OP_3D=null;
 function stopSong(){ if(OP_AUDIO){ try{ OP_AUDIO.close(); }catch(e){} OP_AUDIO=null; } }
 
 function playOpening(opts={}){
@@ -1214,10 +1879,12 @@ function playOpening(opts={}){
     ${opts.noSkip?'':'<button class="op-skip" id="opSkip">スキップ ▶▶</button>'}
   </div>`;
   document.body.appendChild(op);
+  const want3D = !opts.no3d && webglOK();
+  if(want3D) loadThree();
   const tree=op.querySelector('#opTree'), cap=op.querySelector('#opCap');
   const timers=[]; const at=(s,f)=>timers.push(setTimeout(f,s*1000));
   const grow=(e,size)=>{ tree.classList.remove('drop','pop'); void tree.offsetWidth; tree.textContent=e; tree.style.fontSize=size+'px'; tree.classList.add('pop'); };
-  const close=()=>{ timers.forEach(clearTimeout); stopSong(); op.classList.add('out'); setTimeout(()=>op.remove(),500); try{ sessionStorage.setItem('op_seen','1'); }catch(e){} };
+  const close=()=>{ timers.forEach(clearTimeout); stopSong(); if(OP_3D){ const g3=OP_3D; OP_3D=null; setTimeout(()=>g3.dispose(),500); } op.classList.add('out'); setTimeout(()=>op.remove(),500); try{ sessionStorage.setItem('op_seen','1'); }catch(e){} };
   // カラオケ字幕
   const sing=i=>{
     const ln=SONG.lines[i];
@@ -1228,10 +1895,20 @@ function playOpening(opts={}){
     let t=lineStart(i);
     SONG.lines[i].forEach(([,,b],k)=>{ at(t,()=>{ const e=document.getElementById(`k${i}_${k}`); if(e) e.classList.add('on'); }); t+=b*BEAT; });
   };
-  const run=(withSound)=>{
+  const run=async(withSound)=>{
     const g=op.querySelector('#opGate'); if(g) g.remove();
-    if(withSound){ try{ const C=window.AudioContext||window.webkitAudioContext; OP_AUDIO=new C(); scheduleSong(OP_AUDIO, OP_AUDIO.currentTime+.05); }catch(e){} }
+    let ac=null;
+    if(withSound){ try{ const C=window.AudioContext||window.webkitAudioContext; ac=new C(); if(ac.resume) ac.resume(); }catch(e){} } // タップ中に つくる（iPhone 対策）
+    if(want3D){ // 3D を ためす（読みこみは さいだい 1.5秒 まつ）
+      const ok=await Promise.race([loadThree(), new Promise(r=>setTimeout(()=>r(false), opts.wait3d||1500))]);
+      if(ok && window.THREE && document.body.contains(op)){
+        try{ OP_3D=make3D(op.querySelector('.op-in')); op.classList.add('op3d'); window.__op3d=OP_3D; }catch(e){ OP_3D=null; }
+      }
+    }
+    if(!document.body.contains(op)) return;
+    if(ac){ OP_AUDIO=ac; try{ scheduleSong(ac, ac.currentTime+.05); }catch(e){} }
     timeline();
+    if(OP_3D && !opts.manual3d) OP_3D.start();
   };
   const timeline=()=>{
     op.classList.add('run');
@@ -1274,7 +1951,7 @@ async function renderSongWav(opt={}){
 (function(){
   const q=new URLSearchParams(location.search);
   let seen=false; try{ seen=sessionStorage.getItem('op_seen')==='1'; }catch(e){}
-  if(q.has('rec')) playOpening({noSkip:true, autoRun:true, sound:false});
+  if(q.has('rec')) playOpening({noSkip:true, autoRun:true, sound:false, wait3d:15000});
   else if(q.has('op') || !seen) playOpening();
 })();
 </script>
