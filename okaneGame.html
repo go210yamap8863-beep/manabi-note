@@ -1137,8 +1137,8 @@ const SONG_END = (SONG.intro + 32)*BEAT;              // 17秒
 const SONG_LEN = SONG_END + 2.2;
 
 // AudioContext / OfflineAudioContext の どちらにも 予約できる
-function scheduleSong(ctx, t0){
-  const master=ctx.createGain(); master.gain.value=.4;
+function scheduleSong(ctx, t0, {lead=1}={}){
+  const master=ctx.createGain(); master.gain.value=.55;
   const comp=ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
   const noise=ctx.createBuffer(1, Math.floor(ctx.sampleRate*.2), ctx.sampleRate);
   const nd=noise.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
@@ -1161,8 +1161,8 @@ function scheduleSong(ctx, t0){
   // メロディ
   SONG.lines.forEach((ln,i)=>{ let t=t0+lineStart(i);
     ln.forEach(([,m,b])=>{ const d=b*BEAT;
-      tone('square',midiHz(m),t,d*.92,.10,{lp:2600,vib:b>=1});
-      tone('triangle',midiHz(m+12),t,d*.92,.05,{lp:5000});
+      if(lead>0){ tone('square',midiHz(m),t,d*.92,.10*lead,{lp:2600,vib:b>=1});
+      tone('triangle',midiHz(m+12),t,d*.92,.05*lead,{lp:5000}); }
       t+=d; }); });
   // ばんそう（ベース・コード・ドラム）
   SONG.chords.forEach((c,k)=>{ const t=t0+(SONG.intro+k*2)*BEAT;
@@ -1181,21 +1181,7 @@ function scheduleSong(ctx, t0){
 }
 
 let OP_AUDIO=null;
-function stopSong(){ if(OP_AUDIO){ try{ OP_AUDIO.close(); }catch(e){} OP_AUDIO=null; } try{ speechSynthesis.cancel(); }catch(e){} }
-// ロボット声（スマホの 読み上げ機能）
-const VOICE_LINES=['ちいさな たねを まいたなら','コツコツ コインを あげようよ','さがる ひだって へっちゃらさ','おおきく そだて おかねのき'];
-const VOICE_TITLE='おかねのき そだてゲーム！';
-function jaVoice(){ try{ return speechSynthesis.getVoices().find(v=>/^ja/i.test(v.lang))||null; }catch(e){ return null; } }
-function sayRobot(text){
-  try{
-    if(!window.speechSynthesis) return;
-    const u=new SpeechSynthesisUtterance(text); u.lang='ja-JP';
-    const v=jaVoice(); if(v) u.voice=v;
-    u.pitch=1.7; u.rate=1.1; u.volume=1;
-    speechSynthesis.speak(u);
-  }catch(e){}
-}
-function unlockVoice(){ try{ if(window.speechSynthesis){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); } }catch(e){} }
+function stopSong(){ if(OP_AUDIO){ try{ OP_AUDIO.close(); }catch(e){} OP_AUDIO=null; } }
 
 function playOpening(opts={}){
   const old=document.getElementById('op'); if(old) old.remove();
@@ -1243,14 +1229,12 @@ function playOpening(opts={}){
     SONG.lines[i].forEach(([,,b],k)=>{ at(t,()=>{ const e=document.getElementById(`k${i}_${k}`); if(e) e.classList.add('on'); }); t+=b*BEAT; });
   };
   const run=(withSound)=>{
-    op.querySelector('#opGate').remove();
+    const g=op.querySelector('#opGate'); if(g) g.remove();
+    if(withSound){ try{ const C=window.AudioContext||window.webkitAudioContext; OP_AUDIO=new C(); scheduleSong(OP_AUDIO, OP_AUDIO.currentTime+.05); }catch(e){} }
+    timeline();
+  };
+  const timeline=()=>{
     op.classList.add('run');
-    if(withSound){
-      try{ const C=window.AudioContext||window.webkitAudioContext; OP_AUDIO=new C(); scheduleSong(OP_AUDIO, OP_AUDIO.currentTime+.05); }catch(e){}
-      unlockVoice();
-      VOICE_LINES.forEach((t,i)=>at(lineStart(i)-.05,()=>sayRobot(t)));
-      at(SONG_END+.4,()=>sayRobot(VOICE_TITLE));
-    }
     window.__opStart=performance.now();
     at(.2, ()=>tree.classList.add('drop'));
     SONG.lines.forEach((_,i)=>{ at(lineStart(i)-.15,()=>sing(i)); karaoke(i); });
@@ -1267,16 +1251,15 @@ function playOpening(opts={}){
   };
   op.querySelector('#opStart').onclick=close;
   const sk=op.querySelector('#opSkip'); if(sk) sk.onclick=close;
-  try{ if(window.speechSynthesis) speechSynthesis.getVoices(); }catch(e){}
   op.querySelector('#opPlay').onclick=()=>run(true);
   op.querySelector('#opMute').onclick=()=>run(false);
   if(opts.autoRun) run(!!opts.sound);
 }
 
 // 動画づくり用：うたを WAV に して base64 で かえす
-async function renderSongWav(){
+async function renderSongWav(opt={}){
   const sr=44100, ctx=new OfflineAudioContext(2, Math.ceil(sr*SONG_LEN), sr);
-  scheduleSong(ctx, 0);
+  scheduleSong(ctx, 0, opt);
   const buf=await ctx.startRendering();
   const n=buf.length, ch=[buf.getChannelData(0),buf.getChannelData(1)];
   const dv=new DataView(new ArrayBuffer(44+n*4));
