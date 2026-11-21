@@ -1138,7 +1138,7 @@ const SONG_LEN = SONG_END + 2.2;
 
 // AudioContext / OfflineAudioContext の どちらにも 予約できる
 function scheduleSong(ctx, t0){
-  const master=ctx.createGain(); master.gain.value=.55;
+  const master=ctx.createGain(); master.gain.value=.4;
   const comp=ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
   const noise=ctx.createBuffer(1, Math.floor(ctx.sampleRate*.2), ctx.sampleRate);
   const nd=noise.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
@@ -1181,7 +1181,21 @@ function scheduleSong(ctx, t0){
 }
 
 let OP_AUDIO=null;
-function stopSong(){ if(OP_AUDIO){ try{ OP_AUDIO.close(); }catch(e){} OP_AUDIO=null; } }
+function stopSong(){ if(OP_AUDIO){ try{ OP_AUDIO.close(); }catch(e){} OP_AUDIO=null; } try{ speechSynthesis.cancel(); }catch(e){} }
+// ロボット声（スマホの 読み上げ機能）
+const VOICE_LINES=['ちいさな たねを まいたなら','コツコツ コインを あげようよ','さがる ひだって へっちゃらさ','おおきく そだて おかねのき'];
+const VOICE_TITLE='おかねのき そだてゲーム！';
+function jaVoice(){ try{ return speechSynthesis.getVoices().find(v=>/^ja/i.test(v.lang))||null; }catch(e){ return null; } }
+function sayRobot(text){
+  try{
+    if(!window.speechSynthesis) return;
+    const u=new SpeechSynthesisUtterance(text); u.lang='ja-JP';
+    const v=jaVoice(); if(v) u.voice=v;
+    u.pitch=1.7; u.rate=1.1; u.volume=1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function unlockVoice(){ try{ if(window.speechSynthesis){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); } }catch(e){} }
 
 function playOpening(opts={}){
   const old=document.getElementById('op'); if(old) old.remove();
@@ -1233,6 +1247,9 @@ function playOpening(opts={}){
     op.classList.add('run');
     if(withSound){
       try{ const C=window.AudioContext||window.webkitAudioContext; OP_AUDIO=new C(); scheduleSong(OP_AUDIO, OP_AUDIO.currentTime+.05); }catch(e){}
+      unlockVoice();
+      VOICE_LINES.forEach((t,i)=>at(lineStart(i)-.05,()=>sayRobot(t)));
+      at(SONG_END+.4,()=>sayRobot(VOICE_TITLE));
     }
     window.__opStart=performance.now();
     at(.2, ()=>tree.classList.add('drop'));
@@ -1250,6 +1267,7 @@ function playOpening(opts={}){
   };
   op.querySelector('#opStart').onclick=close;
   const sk=op.querySelector('#opSkip'); if(sk) sk.onclick=close;
+  try{ if(window.speechSynthesis) speechSynthesis.getVoices(); }catch(e){}
   op.querySelector('#opPlay').onclick=()=>run(true);
   op.querySelector('#opMute').onclick=()=>run(false);
   if(opts.autoRun) run(!!opts.sound);
