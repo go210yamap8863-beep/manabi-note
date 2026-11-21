@@ -256,6 +256,7 @@ function goHome(){
   <button class="menu-btn" onclick="setupScreen()"><span class="ic">🌱</span><span><b>つみたて チャレンジ</b><small>12年間 お金の木を そだてる メインゲーム（10分くらい）</small></span></button>
   <button class="menu-btn" onclick="startQuiz()"><span class="ic">❓</span><span><b>おかね クイズ</b><small>10もん チャレンジ${quizBest!=null?`　ベスト ${quizBest}/10`:''}</small></span></button>
   <button class="menu-btn" onclick="compoundToy()"><span class="ic">🧮</span><span><b>ふくりの まほう</b><small>まいつき いくら で 何円に なる？ ためしてみよう</small></span></button>
+  <button class="menu-btn" onclick="playOpening()"><span class="ic">🎬</span><span><b>オープニングを みる</b><small>もう1回 みたい ときは ここから</small></span></button>
   <button class="menu-btn" onclick="parentScreen()"><span class="ic">👨‍👩‍👧</span><span><b>おうちの人へ</b><small>あそび方・はなしあいの ヒント・こどもNISAについて</small></span></button>`;
 }
 
@@ -1048,6 +1049,121 @@ function sgEnd(){
 }
 
 goHome();
+</script>
+<style>
+/* ===== オープニング ===== */
+.op{position:fixed;inset:0;z-index:2000;overflow:hidden;background:linear-gradient(#1e3a8a,#7c3aed 55%,#f472b6);transition:background 2s,opacity .5s;font-family:inherit;}
+.op.day{background:linear-gradient(#38bdf8,#a5f3fc 60%,#fef3c7);}
+.op.out{opacity:0;pointer-events:none;}
+.op-in{position:relative;width:100%;max-width:480px;height:100%;margin:0 auto;}
+.op-stars{position:absolute;inset:0;transition:opacity 2s;}
+.op.day .op-stars{opacity:0;}
+.op-star{position:absolute;color:#fff;font-size:10px;animation:twk 1.6s ease-in-out infinite;}
+@keyframes twk{50%{opacity:.2}}
+.op-sun{position:absolute;right:12%;top:62%;font-size:70px;transition:top 2.6s ease,transform 2.6s;}
+.op.day .op-sun{top:7%;transform:rotate(90deg);}
+.op-ground{position:absolute;left:0;right:0;bottom:0;height:24%;background:linear-gradient(#4ade80,#16a34a);border-radius:50% 50% 0 0/22px 22px 0 0;}
+.op-tree{position:absolute;left:50%;bottom:20%;transform:translateX(-50%);font-size:40px;line-height:1;transition:font-size .6s cubic-bezier(.34,1.56,.64,1);}
+.op-tree.drop{animation:opdrop 1s cubic-bezier(.5,0,.75,0) both;}
+@keyframes opdrop{from{transform:translate(-50%,-70vh) rotate(-200deg)}to{transform:translate(-50%,0) rotate(0)}}
+.op-tree.pop{animation:oppop .6s ease;}
+@keyframes oppop{0%{transform:translateX(-50%) scale(.6)}60%{transform:translateX(-50%) scale(1.25)}100%{transform:translateX(-50%) scale(1)}}
+.op-coin{position:absolute;top:-60px;font-size:30px;opacity:0;}
+.op.rain .op-coin{animation:oprain 1.1s ease-in forwards;}
+@keyframes oprain{0%{opacity:1;transform:translateY(0) rotate(0)}90%{opacity:1}100%{opacity:0;transform:translateY(72vh) rotate(540deg)}}
+.op-cap{position:absolute;left:16px;right:16px;top:20%;text-align:center;color:#fff;font-weight:700;font-size:21px;line-height:1.6;text-shadow:0 2px 10px rgba(0,0,0,.35);opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s;}
+.op-cap.show{opacity:1;transform:none;}
+.op-chart{position:absolute;left:10%;width:80%;top:34%;height:20%;opacity:0;transition:opacity .4s;}
+.op-chart.show{opacity:1;}
+.op-chart path{fill:none;stroke:#fff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:600;stroke-dashoffset:600;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));}
+.op-chart.show path{animation:opdraw 2.6s ease-in-out forwards;}
+@keyframes opdraw{to{stroke-dashoffset:0}}
+.op-spark{position:absolute;font-size:26px;opacity:0;}
+.op.fruit .op-spark{animation:opspark .6s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes opspark{0%{opacity:0;transform:scale(.2)}100%{opacity:1;transform:scale(1)}}
+.op-stage{position:absolute;inset:0;}
+.op.final .op-chart,.op.final .op-spark{opacity:0!important;transition:opacity .5s;}
+.op.final .op-tree{bottom:26%;transition:bottom .8s ease,font-size .6s;}
+.op-title{position:absolute;left:0;right:0;top:17%;text-align:center;}
+.op-title .l1,.op-title .l2{display:block;}
+.op-title span.ch{display:inline-block;font-weight:700;color:#fff;font-size:40px;-webkit-text-stroke:2px #f97316;text-shadow:0 4px 0 #f97316,0 8px 16px rgba(0,0,0,.25);opacity:0;}
+.op-title .l2 span.ch{font-size:30px;-webkit-text-stroke-color:#10b981;text-shadow:0 4px 0 #10b981,0 8px 16px rgba(0,0,0,.25);}
+.op.final .op-title span.ch{animation:opletter .6s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes opletter{0%{opacity:0;transform:translateY(-60px) scale(.4)}100%{opacity:1;transform:none}}
+.op-chars{position:absolute;left:0;right:0;bottom:15%;z-index:1;text-align:center;font-size:40px;white-space:nowrap;}
+.op-chars span{display:inline-block;margin:0 4px;transform:translateX(120vw);}
+.op.final .op-chars span{animation:oprun .9s cubic-bezier(.22,1,.36,1) forwards, ophop .5s 1.2s ease-in-out infinite alternate;}
+@keyframes oprun{to{transform:translateX(0)}}
+@keyframes ophop{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+.op-start{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);padding:14px 30px;border:none;border-radius:30px;background:#fff;color:#ff6b9d;font-family:inherit;font-weight:700;font-size:18px;box-shadow:0 6px 20px rgba(0,0,0,.2);cursor:pointer;opacity:0;pointer-events:none;white-space:nowrap;}
+.op-start.show{opacity:1;pointer-events:auto;animation:opbeat 1s ease-in-out infinite;}
+@keyframes opbeat{50%{transform:translateX(-50%) scale(1.08)}}
+.op-skip{position:absolute;right:14px;top:max(14px,env(safe-area-inset-top));padding:6px 12px;border:none;border-radius:14px;background:rgba(255,255,255,.3);color:#fff;font-family:inherit;font-size:12px;cursor:pointer;z-index:2;}
+@media (prefers-reduced-motion: reduce){.op *{animation-duration:.01s!important;transition-duration:.01s!important;}}
+</style>
+<script>
+// ===== オープニング =====
+function playOpening(opts={}){
+  const old=document.getElementById('op'); if(old) old.remove();
+  const op=document.createElement('div'); op.id='op'; op.className='op';
+  const stars=Array.from({length:22},()=>`<span class="op-star" style="left:${Math.random()*96}%;top:${Math.random()*55}%;animation-delay:${Math.random()*1.6}s">✦</span>`).join('');
+  const coins=Array.from({length:14},(_,i)=>`<span class="op-coin" style="left:${8+Math.random()*84}%;animation-delay:${(i*0.09).toFixed(2)}s">${i%4===0?'💴':'🪙'}</span>`).join('');
+  const sparks=[[28,60,'🍎'],[62,58,'🍎'],[45,55,'✨'],[20,70,'🪙'],[72,68,'🪙'],[38,64,'🍎'],[56,66,'✨']].map(([x,y,e],i)=>`<span class="op-spark" style="left:${x}%;top:${y}%;animation-delay:${i*0.1}s">${e}</span>`).join('');
+  const letters=(t,d0)=>[...t].map((c,i)=>`<span class="ch" style="animation-delay:${(d0+i*0.08).toFixed(2)}s">${c}</span>`).join('');
+  op.innerHTML=`<div class="op-in">
+    <div class="op-stars">${stars}</div>
+    <div class="op-sun">☀️</div>
+    <div class="op-stage">
+      <div class="op-ground"></div>
+      ${coins}
+      <svg class="op-chart" viewBox="0 0 300 100" preserveAspectRatio="none"><path d="M5,85 L40,76 L75,66 L105,72 L135,93 L165,64 L200,48 L235,36 L265,22 L295,8"/></svg>
+      ${sparks}
+      <div class="op-tree" id="opTree">🌰</div>
+    </div>
+    <div class="op-cap" id="opCap"></div>
+    <div class="op-title"><span class="l2">${letters('おかねの木',0.1)}</span><span class="l1">${letters('そだてゲーム',0.55)}</span></div>
+    <div class="op-chars">${['🐰','🐻','🐱','🐶','🦊'].map((c,i)=>`<span style="animation-delay:${(1+i*0.12).toFixed(2)}s,${(1.9+i*0.1).toFixed(2)}s">${c}</span>`).join('')}</div>
+    <button class="op-start" id="opStart">▶ タップして はじめる</button>
+    ${opts.noSkip?'':'<button class="op-skip" id="opSkip">スキップ ▶▶</button>'}
+  </div>`;
+  document.body.appendChild(op);
+  const tree=op.querySelector('#opTree'), cap=op.querySelector('#opCap');
+  const timers=[]; const at=(ms,f)=>timers.push(setTimeout(f,ms));
+  const say=t=>{ cap.classList.remove('show'); setTimeout(()=>{ cap.innerHTML=t; cap.classList.add('show'); },250); };
+  const grow=(e,size)=>{ tree.classList.remove('drop','pop'); void tree.offsetWidth; tree.textContent=e; tree.style.fontSize=size+'px'; tree.classList.add('pop'); };
+  const close=()=>{ timers.forEach(clearTimeout); op.classList.add('out'); setTimeout(()=>op.remove(),500); try{ sessionStorage.setItem('op_seen','1'); }catch(e){} };
+  at(200, ()=>say('ある日、<br>1つの たねを うえてみた…'));
+  at(500, ()=>tree.classList.add('drop'));
+  at(2300,()=>op.classList.add('day'));
+  at(2700,()=>{ say('おこづかいを すこしずつ<br>あげて みると…'); op.classList.add('rain'); });
+  at(3500,()=>grow('🌱',56));
+  at(4300,()=>grow('🌿',72));
+  at(5100,()=>grow('🪴',88));
+  at(5900,()=>{ say('下がる 年も あるけど…'); op.querySelector('.op-chart').classList.add('show'); });
+  at(7300,()=>say('あわてず コツコツ つづけたら…'));
+  at(8500,()=>{ grow('🌳',130); });
+  at(9100,()=>{ say('お金の木が<br>みのった！'); op.classList.add('fruit'); });
+  at(10600,()=>{ cap.classList.remove('show'); op.classList.add('final'); });
+  at(13000,()=>op.querySelector('#opStart').classList.add('show'));
+  op.querySelector('#opStart').onclick=()=>{ chime(); close(); };
+  const sk=op.querySelector('#opSkip'); if(sk) sk.onclick=close;
+}
+function chime(){
+  try{
+    const C=window.AudioContext||window.webkitAudioContext; if(!C) return;
+    const ctx=new C(); const t0=ctx.currentTime;
+    [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain(); o.type='triangle'; o.frequency.value=f;
+      g.gain.setValueAtTime(0,t0+i*.1); g.gain.linearRampToValueAtTime(.18,t0+i*.1+.02); g.gain.exponentialRampToValueAtTime(.001,t0+i*.1+.5);
+      o.connect(g); g.connect(ctx.destination); o.start(t0+i*.1); o.stop(t0+i*.1+.55);
+    });
+  }catch(e){}
+}
+(function(){
+  const q=new URLSearchParams(location.search);
+  let seen=false; try{ seen=sessionStorage.getItem('op_seen')==='1'; }catch(e){}
+  if(q.has('op') || !seen) playOpening({noSkip:q.has('rec')});
+})();
 </script>
 </body>
 </html>
