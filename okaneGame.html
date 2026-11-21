@@ -256,7 +256,7 @@ function goHome(){
   <button class="menu-btn" onclick="setupScreen()"><span class="ic">🌱</span><span><b>つみたて チャレンジ</b><small>12年間 お金の木を そだてる メインゲーム（10分くらい）</small></span></button>
   <button class="menu-btn" onclick="startQuiz()"><span class="ic">❓</span><span><b>おかね クイズ</b><small>10もん チャレンジ${quizBest!=null?`　ベスト ${quizBest}/10`:''}</small></span></button>
   <button class="menu-btn" onclick="compoundToy()"><span class="ic">🧮</span><span><b>ふくりの まほう</b><small>まいつき いくら で 何円に なる？ ためしてみよう</small></span></button>
-  <button class="menu-btn" onclick="playOpening()"><span class="ic">🎬</span><span><b>オープニングを みる</b><small>もう1回 みたい ときは ここから</small></span></button>
+  <button class="menu-btn" onclick="playOpening({autoRun:true,sound:true})"><span class="ic">🎬</span><span><b>オープニングを みる</b><small>もう1回 みたい ときは ここから</small></span></button>
   <button class="menu-btn" onclick="parentScreen()"><span class="ic">👨‍👩‍👧</span><span><b>おうちの人へ</b><small>あそび方・はなしあいの ヒント・こどもNISAについて</small></span></button>`;
 }
 
@@ -1073,6 +1073,18 @@ goHome();
 @keyframes oprain{0%{opacity:1;transform:translateY(0) rotate(0)}90%{opacity:1}100%{opacity:0;transform:translateY(72vh) rotate(540deg)}}
 .op-cap{position:absolute;left:16px;right:16px;top:20%;text-align:center;color:#fff;font-weight:700;font-size:21px;line-height:1.6;text-shadow:0 2px 10px rgba(0,0,0,.35);opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s;}
 .op-cap.show{opacity:1;transform:none;}
+.op-cap .k{opacity:.55;transition:color .1s,opacity .1s;}
+.op-cap .k.on{opacity:1;color:#fde047;}
+.op-cap{font-size:24px;}
+.op-song{position:absolute;left:0;right:0;top:13%;text-align:center;color:#fff;font-size:12px;font-weight:700;opacity:0;transition:opacity .5s;}
+.op.run .op-song{opacity:.85;}
+.op.final .op-song{opacity:0;}
+.op-gate{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:1;}
+.op-gbtn{padding:16px 30px;border:none;border-radius:30px;background:#fff;color:#7c3aed;font-family:inherit;font-weight:700;font-size:19px;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer;animation:opbeat2 1s ease-in-out infinite;}
+@keyframes opbeat2{50%{transform:scale(1.07)}}
+.op-gmute{border:none;background:none;color:rgba(255,255,255,.85);font-family:inherit;font-size:13px;text-decoration:underline;cursor:pointer;}
+.op-gate .wob{animation:twk 1.6s ease-in-out infinite;}
+.op:not(.run) .op-tree{opacity:0;}
 .op-chart{position:absolute;left:10%;width:80%;top:34%;height:20%;opacity:0;transition:opacity .4s;}
 .op-chart.show{opacity:1;}
 .op-chart path{fill:none;stroke:#fff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:600;stroke-dashoffset:600;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));}
@@ -1102,9 +1114,78 @@ goHome();
 @media (prefers-reduced-motion: reduce){.op *{animation-duration:.01s!important;transition-duration:.01s!important;}}
 </style>
 <script>
-// ===== オープニング =====
+// ===== オープニング（うた つき）=====
+// オリジナル曲「おかねの木の うた」 120BPM・ハ長調
+const SONG = {
+  bpm:120, intro:2,
+  lines:[ // [歌詞, MIDIノート, 拍]
+    [['ち',67,.5],['い',67,.5],['さ',69,.5],['な',67,.5],['た',64,.5],['ね',67,.5],['を',72,1],['ま',69,.5],['い',69,.5],['た',67,.5],['な',64,.5],['ら',62,2]],
+    [['コ',64,.5],['ツ',64,.5],['コ',67,.5],['ツ',67,.5],['コ',69,.5],['イ',69,.5],['ン',67,.5],['を',67,.5],['あ',65,.5],['げ',65,.5],['よ',64,.5],['う',62,.5],['よ',67,2]],
+    [['さ',69,.5],['が',69,.5],['る',65,1],['ひ',67,.5],['だ',67,.5],['っ',64,.5],['て',60,.5],['へ',62,.5],['っ',62,.5],['ちゃ',64,.5],['ら',65,.5],['さ',67,2]],
+    [['お',72,.5],['お',72,.5],['き',71,.5],['く',69,.5],['そ',67,.5],['だ',64,.5],['て',67,1],['お',67,.5],['か',69,.5],['ね',71,.5],['の',71,.5],['木',72,2]],
+  ],
+  // 2拍ごとの コード
+  chords:['C','C','F','G', 'C','F','G','G', 'F','C','G','G', 'F','C','G','C'],
+};
+const SPACE_AFTER = [[3,6],[3,7],[2,6],[3,6]]; // 歌詞の 区切り（見やすさ用）
+const CHORD_NOTES = {C:[60,64,67], F:[60,65,69], G:[59,62,67]};
+const CHORD_BASS = {C:48, F:41, G:43};
+const midiHz = m => 440*Math.pow(2,(m-69)/12);
+const BEAT = 60/SONG.bpm;
+const lineStart = i => (SONG.intro + i*8)*BEAT;      // 秒
+const SONG_END = (SONG.intro + 32)*BEAT;              // 17秒
+const SONG_LEN = SONG_END + 2.2;
+
+// AudioContext / OfflineAudioContext の どちらにも 予約できる
+function scheduleSong(ctx, t0){
+  const master=ctx.createGain(); master.gain.value=.55;
+  const comp=ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
+  const noise=ctx.createBuffer(1, Math.floor(ctx.sampleRate*.2), ctx.sampleRate);
+  const nd=noise.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
+  const tone=(type,f,t,d,vol,{lp=4000,att=.01,rel=.06,vib=0}={})=>{
+    const o=ctx.createOscillator(), g=ctx.createGain(), fl=ctx.createBiquadFilter();
+    o.type=type; o.frequency.setValueAtTime(f,t);
+    if(vib){ const l=ctx.createOscillator(), lg=ctx.createGain(); l.frequency.value=5.5; lg.gain.value=f*.006; l.connect(lg); lg.connect(o.frequency); l.start(t+.12); l.stop(t+d+rel); }
+    fl.type='lowpass'; fl.frequency.value=lp;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+att);
+    g.gain.setValueAtTime(vol*.8,t+Math.max(att,d-rel)); g.gain.linearRampToValueAtTime(0,t+d);
+    o.connect(fl); fl.connect(g); g.connect(master); o.start(t); o.stop(t+d+.02);
+  };
+  const hit=(t,vol,hp,d)=>{ const s=ctx.createBufferSource(), g=ctx.createGain(), f=ctx.createBiquadFilter();
+    s.buffer=noise; f.type='highpass'; f.frequency.value=hp; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+d);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+d+.01); };
+  const kick=t=>{ const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(45,t+.15);
+    g.gain.setValueAtTime(.5,t); g.gain.exponentialRampToValueAtTime(.001,t+.18); o.connect(g); g.connect(master); o.start(t); o.stop(t+.2); };
+  // イントロ（カウント）
+  for(let b=0;b<SONG.intro;b++){ hit(t0+b*BEAT,.35,3000,.06); tone('triangle',midiHz(b?79:84),t0+b*BEAT,.12,.12); }
+  // メロディ
+  SONG.lines.forEach((ln,i)=>{ let t=t0+lineStart(i);
+    ln.forEach(([,m,b])=>{ const d=b*BEAT;
+      tone('square',midiHz(m),t,d*.92,.10,{lp:2600,vib:b>=1});
+      tone('triangle',midiHz(m+12),t,d*.92,.05,{lp:5000});
+      t+=d; }); });
+  // ばんそう（ベース・コード・ドラム）
+  SONG.chords.forEach((c,k)=>{ const t=t0+(SONG.intro+k*2)*BEAT;
+    tone('triangle',midiHz(CHORD_BASS[c]),t,BEAT*.9,.32,{lp:900});
+    tone('triangle',midiHz(CHORD_BASS[c]+7),t+BEAT,BEAT*.8,.22,{lp:900});
+    CHORD_NOTES[c].forEach(n=>{ tone('triangle',midiHz(n),t+BEAT*.5,BEAT*.3,.045); tone('triangle',midiHz(n),t+BEAT*1.5,BEAT*.3,.045); });
+    kick(t); hit(t+BEAT,.16,1500,.12);
+    for(let e=0;e<4;e++) hit(t+e*BEAT/2,.07,7000,.04);
+  });
+  // さいごの ファンファーレ
+  const tf=t0+SONG_END;
+  [72,76,79].forEach((m,i)=>tone('square',midiHz(m),tf+i*.09,.18,.09,{lp:3000}));
+  [60,64,67,72,84].forEach(m=>tone('triangle',midiHz(m),tf+.3,1.8,.09,{rel:1.2}));
+  tone('square',midiHz(84),tf+.3,1.6,.07,{lp:3000,vib:1,rel:1});
+  kick(tf+.3); hit(tf+.3,.3,800,1.2);
+}
+
+let OP_AUDIO=null;
+function stopSong(){ if(OP_AUDIO){ try{ OP_AUDIO.close(); }catch(e){} OP_AUDIO=null; } }
+
 function playOpening(opts={}){
   const old=document.getElementById('op'); if(old) old.remove();
+  stopSong();
   const op=document.createElement('div'); op.id='op'; op.className='op';
   const stars=Array.from({length:22},()=>`<span class="op-star" style="left:${Math.random()*96}%;top:${Math.random()*55}%;animation-delay:${Math.random()*1.6}s">✦</span>`).join('');
   const coins=Array.from({length:14},(_,i)=>`<span class="op-coin" style="left:${8+Math.random()*84}%;animation-delay:${(i*0.09).toFixed(2)}s">${i%4===0?'💴':'🪙'}</span>`).join('');
@@ -1120,49 +1201,80 @@ function playOpening(opts={}){
       ${sparks}
       <div class="op-tree" id="opTree">🌰</div>
     </div>
+    <div class="op-song">🎵 おかねの木の うた</div>
     <div class="op-cap" id="opCap"></div>
     <div class="op-title"><span class="l2">${letters('おかねの木',0.1)}</span><span class="l1">${letters('そだてゲーム',0.55)}</span></div>
     <div class="op-chars">${['🐰','🐻','🐱','🐶','🦊'].map((c,i)=>`<span style="animation-delay:${(1+i*0.12).toFixed(2)}s,${(1.9+i*0.1).toFixed(2)}s">${c}</span>`).join('')}</div>
     <button class="op-start" id="opStart">▶ タップして はじめる</button>
+    <div class="op-gate" id="opGate">
+      <div style="font-size:64px" class="wob">🌰</div>
+      <button class="op-gbtn" id="opPlay">🎵 タップして はじまり！</button>
+      <button class="op-gmute" id="opMute">おとなしで みる</button>
+    </div>
     ${opts.noSkip?'':'<button class="op-skip" id="opSkip">スキップ ▶▶</button>'}
   </div>`;
   document.body.appendChild(op);
   const tree=op.querySelector('#opTree'), cap=op.querySelector('#opCap');
-  const timers=[]; const at=(ms,f)=>timers.push(setTimeout(f,ms));
-  const say=t=>{ cap.classList.remove('show'); setTimeout(()=>{ cap.innerHTML=t; cap.classList.add('show'); },250); };
+  const timers=[]; const at=(s,f)=>timers.push(setTimeout(f,s*1000));
   const grow=(e,size)=>{ tree.classList.remove('drop','pop'); void tree.offsetWidth; tree.textContent=e; tree.style.fontSize=size+'px'; tree.classList.add('pop'); };
-  const close=()=>{ timers.forEach(clearTimeout); op.classList.add('out'); setTimeout(()=>op.remove(),500); try{ sessionStorage.setItem('op_seen','1'); }catch(e){} };
-  at(200, ()=>say('ある日、<br>1つの たねを うえてみた…'));
-  at(500, ()=>tree.classList.add('drop'));
-  at(2300,()=>op.classList.add('day'));
-  at(2700,()=>{ say('おこづかいを すこしずつ<br>あげて みると…'); op.classList.add('rain'); });
-  at(3500,()=>grow('🌱',56));
-  at(4300,()=>grow('🌿',72));
-  at(5100,()=>grow('🪴',88));
-  at(5900,()=>{ say('下がる 年も あるけど…'); op.querySelector('.op-chart').classList.add('show'); });
-  at(7300,()=>say('あわてず コツコツ つづけたら…'));
-  at(8500,()=>{ grow('🌳',130); });
-  at(9100,()=>{ say('お金の木が<br>みのった！'); op.classList.add('fruit'); });
-  at(10600,()=>{ cap.classList.remove('show'); op.classList.add('final'); });
-  at(13000,()=>op.querySelector('#opStart').classList.add('show'));
-  op.querySelector('#opStart').onclick=()=>{ chime(); close(); };
+  const close=()=>{ timers.forEach(clearTimeout); stopSong(); op.classList.add('out'); setTimeout(()=>op.remove(),500); try{ sessionStorage.setItem('op_seen','1'); }catch(e){} };
+  // カラオケ字幕
+  const sing=i=>{
+    const ln=SONG.lines[i];
+    cap.innerHTML=ln.map(([s],k)=>`<span class="k" id="k${i}_${k}">${s}</span>${SPACE_AFTER[i].includes(k)?' ':''}`).join('');
+    cap.classList.add('show');
+  };
+  const karaoke=i=>{ // 1文字ずつ 色を かえる（はじめからの 時間で 予約）
+    let t=lineStart(i);
+    SONG.lines[i].forEach(([,,b],k)=>{ at(t,()=>{ const e=document.getElementById(`k${i}_${k}`); if(e) e.classList.add('on'); }); t+=b*BEAT; });
+  };
+  const run=(withSound)=>{
+    op.querySelector('#opGate').remove();
+    op.classList.add('run');
+    if(withSound){
+      try{ const C=window.AudioContext||window.webkitAudioContext; OP_AUDIO=new C(); scheduleSong(OP_AUDIO, OP_AUDIO.currentTime+.05); }catch(e){}
+    }
+    window.__opStart=performance.now();
+    at(.2, ()=>tree.classList.add('drop'));
+    SONG.lines.forEach((_,i)=>{ at(lineStart(i)-.15,()=>sing(i)); karaoke(i); });
+    at(2.8, ()=>op.classList.add('day'));
+    at(lineStart(1), ()=>op.classList.add('rain'));
+    at(lineStart(1)+.9, ()=>grow('🌱',56));
+    at(lineStart(1)+1.9,()=>grow('🌿',72));
+    at(lineStart(1)+2.9,()=>grow('🪴',88));
+    at(lineStart(2), ()=>op.querySelector('.op-chart').classList.add('show'));
+    at(lineStart(3)+.3, ()=>grow('🌳',130));
+    at(lineStart(3)+2, ()=>op.classList.add('fruit'));
+    at(SONG_END, ()=>{ cap.classList.remove('show'); op.classList.add('final'); });
+    at(SONG_END+1.6, ()=>op.querySelector('#opStart').classList.add('show'));
+  };
+  op.querySelector('#opStart').onclick=close;
   const sk=op.querySelector('#opSkip'); if(sk) sk.onclick=close;
+  op.querySelector('#opPlay').onclick=()=>run(true);
+  op.querySelector('#opMute').onclick=()=>run(false);
+  if(opts.autoRun) run(!!opts.sound);
 }
-function chime(){
-  try{
-    const C=window.AudioContext||window.webkitAudioContext; if(!C) return;
-    const ctx=new C(); const t0=ctx.currentTime;
-    [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
-      const o=ctx.createOscillator(), g=ctx.createGain(); o.type='triangle'; o.frequency.value=f;
-      g.gain.setValueAtTime(0,t0+i*.1); g.gain.linearRampToValueAtTime(.18,t0+i*.1+.02); g.gain.exponentialRampToValueAtTime(.001,t0+i*.1+.5);
-      o.connect(g); g.connect(ctx.destination); o.start(t0+i*.1); o.stop(t0+i*.1+.55);
-    });
-  }catch(e){}
+
+// 動画づくり用：うたを WAV に して base64 で かえす
+async function renderSongWav(){
+  const sr=44100, ctx=new OfflineAudioContext(2, Math.ceil(sr*SONG_LEN), sr);
+  scheduleSong(ctx, 0);
+  const buf=await ctx.startRendering();
+  const n=buf.length, ch=[buf.getChannelData(0),buf.getChannelData(1)];
+  const dv=new DataView(new ArrayBuffer(44+n*4));
+  const w=(o,s)=>[...s].forEach((c,i)=>dv.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF'); dv.setUint32(4,36+n*4,true); w(8,'WAVE'); w(12,'fmt '); dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,2,true);
+  dv.setUint32(24,sr,true); dv.setUint32(28,sr*4,true); dv.setUint16(32,4,true); dv.setUint16(34,16,true); w(36,'data'); dv.setUint32(40,n*4,true);
+  for(let i=0;i<n;i++) for(let c=0;c<2;c++){ const v=Math.max(-1,Math.min(1,ch[c][i])); dv.setInt16(44+(i*2+c)*2, v*32767, true); }
+  const bytes=new Uint8Array(dv.buffer); let s=''; for(let i=0;i<bytes.length;i+=0x8000) s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));
+  return btoa(s);
 }
+
 (function(){
   const q=new URLSearchParams(location.search);
   let seen=false; try{ seen=sessionStorage.getItem('op_seen')==='1'; }catch(e){}
-  if(q.has('op') || !seen) playOpening({noSkip:q.has('rec')});
+  if(q.has('rec')) playOpening({noSkip:true, autoRun:true, sound:false});
+  else if(q.has('op') || !seen) playOpening();
 })();
 </script>
 </body>
