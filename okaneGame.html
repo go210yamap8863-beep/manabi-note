@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="おかねの木">
+<meta name="apple-mobile-web-app-title" content="ツリーマネー">
 <meta name="robots" content="noindex,nofollow">
-<title>おかねの木そだてゲーム</title>
+<title>ツリーマネー・アドベンチャー</title>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -163,7 +163,7 @@ body{font-family:'Zen Maru Gothic','Hiragino Maru Gothic Pro',sans-serif;backgro
 <div class="hdr">
   <button class="back" id="homeBtn" onclick="goHome()" style="display:none">🏠 メニュー</button>
   <a href="manabiNote_v2.html" style="position:relative;z-index:2;color:#fff;font-size:11px;text-decoration:none;opacity:.9">◀ まなびノートへ</a>
-  <div class="hdr-title">🌳 おかねの木そだてゲーム</div>
+  <div class="hdr-title">🌳 ツリーマネー・アドベンチャー</div>
   <div class="hdr-sub">つかう・ためる・ふやす を あそびながら まなぼう</div>
 </div>
 <div class="content" id="app"></div>
@@ -1544,7 +1544,7 @@ goHome();
 .op-title{position:absolute;left:0;right:0;top:17%;text-align:center;}
 .op-title .l1,.op-title .l2{display:block;}
 .op-title span.ch{display:inline-block;font-weight:700;color:#fff;font-size:40px;-webkit-text-stroke:2px #f97316;text-shadow:0 4px 0 #f97316,0 8px 16px rgba(0,0,0,.25);opacity:0;}
-.op-title .l2 span.ch{font-size:30px;-webkit-text-stroke-color:#10b981;text-shadow:0 4px 0 #10b981,0 8px 16px rgba(0,0,0,.25);}
+.op-title .l2 span.ch{font-size:34px;-webkit-text-stroke-color:#10b981;text-shadow:0 4px 0 #10b981,0 8px 16px rgba(0,0,0,.25);}
 .op.final .op-title span.ch{animation:opletter .6s cubic-bezier(.34,1.56,.64,1) forwards;}
 @keyframes opletter{0%{opacity:0;transform:translateY(-60px) scale(.4)}100%{opacity:1;transform:none}}
 .op-chars{position:absolute;left:0;right:0;bottom:15%;z-index:1;text-align:center;font-size:40px;white-space:nowrap;}
@@ -1868,7 +1868,7 @@ function playOpening(opts={}){
     </div>
     <div class="op-song">🎵 おかねの木の うた</div>
     <div class="op-cap" id="opCap"></div>
-    <div class="op-title"><span class="l2">${letters('おかねの木',0.1)}</span><span class="l1">${letters('そだてゲーム',0.55)}</span></div>
+    <div class="op-title"><span class="l2">${letters('ツリーマネー',0.1)}</span><span class="l1">${letters('アドベンチャー',0.6)}</span></div>
     <div class="op-chars">${['🐰','🐻','🐱','🐶','🦊'].map((c,i)=>`<span style="animation-delay:${(1+i*0.12).toFixed(2)}s,${(1.9+i*0.1).toFixed(2)}s">${c}</span>`).join('')}</div>
     <button class="op-start" id="opStart">▶ タップして はじめる</button>
     <div class="op-gate" id="opGate">
