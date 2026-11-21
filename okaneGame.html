@@ -1180,8 +1180,9 @@ function scheduleSong(ctx, t0){
   kick(tf+.3); hit(tf+.3,.3,800,1.2);
 }
 
-let OP_AUDIO=null;
-function stopSong(){ if(OP_AUDIO){ try{ OP_AUDIO.close(); }catch(e){} OP_AUDIO=null; } try{ speechSynthesis.cancel(); }catch(e){} }
+let OP_AUDIO=null, OP_MP3=null;
+const SONG_FILE='okaneGame_song.mp3'; // うたごえ入りの 曲（なければ その場で 合成）
+function stopSong(){ if(OP_MP3){ try{ OP_MP3.pause(); }catch(e){} OP_MP3=null; } if(OP_AUDIO){ try{ OP_AUDIO.close(); }catch(e){} OP_AUDIO=null; } try{ speechSynthesis.cancel(); }catch(e){} }
 // ロボット声（スマホの 読み上げ機能）
 const VOICE_LINES=['ちいさな たねを まいたなら','コツコツ コインを あげようよ','さがる ひだって へっちゃらさ','おおきく そだて おかねのき'];
 const VOICE_TITLE='おかねのき そだてゲーム！';
@@ -1242,15 +1243,29 @@ function playOpening(opts={}){
     let t=lineStart(i);
     SONG.lines[i].forEach(([,,b],k)=>{ at(t,()=>{ const e=document.getElementById(`k${i}_${k}`); if(e) e.classList.add('on'); }); t+=b*BEAT; });
   };
+  let mp3=null;
+  try{ mp3=new Audio(SONG_FILE); mp3.preload='auto'; }catch(e){}
+  const synthSound=()=>{ // 予備：その場で 曲を 合成＋読み上げ
+    try{ const C=window.AudioContext||window.webkitAudioContext; OP_AUDIO=new C(); scheduleSong(OP_AUDIO, OP_AUDIO.currentTime+.05); }catch(e){}
+    VOICE_LINES.forEach((t,i)=>at(lineStart(i)-.05,()=>sayRobot(t)));
+    at(SONG_END+.4,()=>sayRobot(VOICE_TITLE));
+  };
   const run=(withSound)=>{
-    op.querySelector('#opGate').remove();
+    const g=op.querySelector('#opGate'); if(g) g.remove();
+    if(!withSound){ timeline(); return; }
+    unlockVoice();
+    let started=false;
+    const go=useMp3=>{ if(started) return; started=true;
+      if(useMp3) OP_MP3=mp3; else { try{ mp3&&mp3.pause(); }catch(e){} synthSound(); }
+      timeline(); };
+    if(mp3){
+      const pr=mp3.play();
+      if(pr&&pr.then) pr.then(()=>go(true)).catch(()=>go(false)); else go(true);
+      setTimeout(()=>go(false),2500); // 読みこみが おそい ときは 予備に
+    } else go(false);
+  };
+  const timeline=()=>{
     op.classList.add('run');
-    if(withSound){
-      try{ const C=window.AudioContext||window.webkitAudioContext; OP_AUDIO=new C(); scheduleSong(OP_AUDIO, OP_AUDIO.currentTime+.05); }catch(e){}
-      unlockVoice();
-      VOICE_LINES.forEach((t,i)=>at(lineStart(i)-.05,()=>sayRobot(t)));
-      at(SONG_END+.4,()=>sayRobot(VOICE_TITLE));
-    }
     window.__opStart=performance.now();
     at(.2, ()=>tree.classList.add('drop'));
     SONG.lines.forEach((_,i)=>{ at(lineStart(i)-.15,()=>sing(i)); karaoke(i); });
