@@ -1137,7 +1137,7 @@ const SONG_END = (SONG.intro + 32)*BEAT;              // 17秒
 const SONG_LEN = SONG_END + 2.2;
 
 // AudioContext / OfflineAudioContext の どちらにも 予約できる
-function scheduleSong(ctx, t0){
+function scheduleSong(ctx, t0, {lead=1}={}){
   const master=ctx.createGain(); master.gain.value=.4;
   const comp=ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
   const noise=ctx.createBuffer(1, Math.floor(ctx.sampleRate*.2), ctx.sampleRate);
@@ -1161,8 +1161,8 @@ function scheduleSong(ctx, t0){
   // メロディ
   SONG.lines.forEach((ln,i)=>{ let t=t0+lineStart(i);
     ln.forEach(([,m,b])=>{ const d=b*BEAT;
-      tone('square',midiHz(m),t,d*.92,.10,{lp:2600,vib:b>=1});
-      tone('triangle',midiHz(m+12),t,d*.92,.05,{lp:5000});
+      if(lead>0){ tone('square',midiHz(m),t,d*.92,.10*lead,{lp:2600,vib:b>=1});
+      tone('triangle',midiHz(m+12),t,d*.92,.05*lead,{lp:5000}); }
       t+=d; }); });
   // ばんそう（ベース・コード・ドラム）
   SONG.chords.forEach((c,k)=>{ const t=t0+(SONG.intro+k*2)*BEAT;
@@ -1289,9 +1289,9 @@ function playOpening(opts={}){
 }
 
 // 動画づくり用：うたを WAV に して base64 で かえす
-async function renderSongWav(){
+async function renderSongWav(opt={}){
   const sr=44100, ctx=new OfflineAudioContext(2, Math.ceil(sr*SONG_LEN), sr);
-  scheduleSong(ctx, 0);
+  scheduleSong(ctx, 0, opt);
   const buf=await ctx.startRendering();
   const n=buf.length, ch=[buf.getChannelData(0),buf.getChannelData(1)];
   const dv=new DataView(new ArrayBuffer(44+n*4));
