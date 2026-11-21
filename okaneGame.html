@@ -86,11 +86,48 @@ body{font-family:'Zen Maru Gothic','Hiragino Maru Gothic Pro',sans-serif;backgro
 .confetti{position:fixed;width:9px;height:9px;pointer-events:none;z-index:999;animation:cf 2s ease-in forwards;}
 @keyframes cf{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
 .back{background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:12px;padding:5px 10px;font-family:inherit;font-size:12px;cursor:pointer;position:absolute;right:14px;top:18px;z-index:2;}
+/* ===== すごろく ===== */
+.board{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;}
+.sq{aspect-ratio:1;border-radius:10px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:19px;line-height:1.1;}
+.sq small{font-size:8px;color:#666;margin-top:2px;white-space:nowrap;}
+.sq .tk{position:absolute;bottom:-4px;left:0;right:0;text-align:center;font-size:15px;letter-spacing:-4px;}
+.sq.cur{box-shadow:0 0 0 3px #f59e0b;z-index:1;}
+.pcards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.pc{background:#fff;border-radius:14px;padding:8px 10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);border:2px solid transparent;line-height:1.6;}
+.pc.on{border-color:#f59e0b;background:#fffbeb;}
+.pc.done{opacity:.6;}
+.pc b{font-size:13px;}
+.dice{display:inline-flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:18px;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:40px;font-weight:700;color:#ff6b9d;margin:10px 0;}
+.dice.roll{animation:dr .12s linear infinite;}
+@keyframes dr{0%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}100%{transform:rotate(-12deg)}}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:800;display:flex;align-items:center;justify-content:center;padding:18px;}
+.modal{background:#fff;border-radius:24px;padding:20px;width:100%;max-width:400px;max-height:88vh;overflow-y:auto;animation:mpop .25s ease;}
+@keyframes mpop{from{transform:scale(.85);opacity:0}}
+.modal .big{font-size:48px;text-align:center;}
+.modal .ttl{font-weight:700;font-size:16px;text-align:center;margin:4px 0 8px;}
+.modal .who{text-align:center;font-size:12px;color:#999;}
+.choice:disabled{opacity:.5;}
+.fly{position:fixed;top:12%;left:50%;transform:translateX(-50%);z-index:900;font-weight:700;font-size:20px;color:#059669;background:#fff;border-radius:16px;padding:8px 16px;box-shadow:0 6px 20px rgba(0,0,0,.15);pointer-events:none;white-space:nowrap;animation:fly 1.3s ease forwards;}
+@keyframes fly{0%{opacity:0;transform:translateX(-50%) translateY(20px)}20%{opacity:1;transform:translateX(-50%) translateY(0)}80%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-40px)}}
+.ptable{width:100%;font-size:13px;border-collapse:collapse;margin-top:8px;}
+.ptable td{padding:5px 2px;border-bottom:1px solid #f3f3f3;}
+.ptable td:last-child{text-align:right;}
+.prow{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.prow .char{flex:none;width:48px;font-size:26px;padding:4px 0;}
+.cnt{display:flex;gap:6px;}
+.cnt button{flex:1;padding:10px;border-radius:12px;border:2px solid #eee;background:#fff;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;color:#888;}
+.cnt button.sel{border-color:#ff6b9d;background:#fff0f6;color:#ff6b9d;}
+.rank{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #f3f3f3;}
+.rank:last-child{border-bottom:none;}
+.rank .m{font-size:30px;}
+.rank .tot{font-weight:700;font-size:18px;color:#d97706;}
+.new{background:#ff6b9d;color:#fff;border-radius:8px;font-size:10px;padding:1px 6px;margin-left:4px;vertical-align:middle;}
 </style>
 </head>
 <body>
 <div class="hdr">
   <button class="back" id="homeBtn" onclick="goHome()" style="display:none">🏠 メニュー</button>
+  <a href="manabiNote_v2.html" style="position:relative;z-index:2;color:#fff;font-size:11px;text-decoration:none;opacity:.9">◀ まなびノートへ</a>
   <div class="hdr-title">🌳 おかねの木そだてゲーム</div>
   <div class="hdr-sub">つかう・ためる・ふやす を あそびながら まなぼう</div>
 </div>
@@ -204,6 +241,7 @@ function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.rand
 
 // ===== screens =====
 function goHome(){
+  if(typeof sgStop==='function') sgStop();
   setHome(false);
   const best = store.get('okane_best', null);
   const quizBest = store.get('okane_quiz_best', null);
@@ -214,6 +252,7 @@ function goHome(){
     <div class="small" style="margin-top:4px">6さい〜18さい までの 12年を 1年ずつ すすめて<br>おとしだまを「つかう・ためる・ふやす」に わけるゲーム</div>
     ${best?`<div class="age-badge" style="margin-top:10px">🏆 ベスト：${best.title}（${yen(best.total)}）</div>`:''}
   </div>
+  <button class="menu-btn" onclick="sgSetup()" style="border-color:#fbcfe8;background:linear-gradient(135deg,#fff0f6,#fffbeb)"><span class="ic">🎲</span><span><b>おかね すごろく<span class="new">NEW</span></b><small>サイコロで すすむ 人生すごろく。かぞくで 1〜4人（20分くらい）</small></span></button>
   <button class="menu-btn" onclick="setupScreen()"><span class="ic">🌱</span><span><b>つみたて チャレンジ</b><small>12年間 お金の木を そだてる メインゲーム（10分くらい）</small></span></button>
   <button class="menu-btn" onclick="startQuiz()"><span class="ic">❓</span><span><b>おかね クイズ</b><small>10もん チャレンジ${quizBest!=null?`　ベスト ${quizBest}/10`:''}</small></span></button>
   <button class="menu-btn" onclick="compoundToy()"><span class="ic">🧮</span><span><b>ふくりの まほう</b><small>まいつき いくら で 何円に なる？ ためしてみよう</small></span></button>
@@ -589,6 +628,423 @@ function parentScreen(){
     </ul>
   </div>
   <button class="btn gray" onclick="goHome()">🏠 メニューへ</button>`;
+}
+
+// =====================================================
+// ===== おかね すごろく（1〜4人＋コンピューター）=====
+// =====================================================
+const SQ = {
+  S:{e:'🏁',n:'スタート',c:'#e0f2fe'},
+  P:{e:'💴',n:'きゅうりょう',c:'#dcfce7'},
+  L:{e:'🍀',n:'ラッキー',c:'#fef9c3'},
+  B:{e:'⚡',n:'ピンチ',c:'#fee2e2'},
+  K:{e:'🛍️',n:'おかいもの',c:'#fce7f3'},
+  Q:{e:'❓',n:'クイズ',c:'#e0e7ff'},
+  T:{e:'🌱',n:'つみたて',c:'#d1fae5'},
+  F:{e:'🕵️',n:'あやしい',c:'#ede9fe'},
+  J:{e:'💼',n:'しごと',c:'#ffedd5'},
+  G:{e:'🏆',n:'ゴール',c:'#fde68a'},
+};
+const BOARD = 'SPLKQTBPFLQJPKBQTPLKBFPQKLTPBQKLPBTG'.split(''); // 36マス（11番目=しごと）
+const STAR_VALUE = 2000; // ⭐1こ = 2,000円 として 点数に する
+const JOBS = [
+  {e:'🍰',n:'パティシエ',pay:6000,d:'おかしで みんなを えがおに。きゅうりょう 6,000円'},
+  {e:'💻',n:'プログラマー',pay:7000,d:'アプリや ゲームを つくる。きゅうりょう 7,000円'},
+  {e:'👩‍⚕️',n:'おいしゃさん',pay:9000,cost:8000,d:'きゅうりょう 9,000円。でも 大学の 学費 8,000円 が いる'},
+  {e:'⚽',n:'サッカーせんしゅ',min:1000,max:16000,d:'かつやく しだいで 1,000〜16,000円。毎回 かわる！'},
+  {e:'📹',n:'ユーチューバー',min:0,max:18000,d:'人気しだいで 0〜18,000円。0円の ことも…'},
+  {e:'🧑‍🌾',n:'のうか',pay:5000,fun:1,d:'きゅうりょう 5,000円 ＋ 毎回 ⭐+1（しぜんの 中で しあわせ）'},
+  {e:'🧑‍🏫',n:'せんせい',pay:6500,d:'こどもに おしえる しごと。きゅうりょう 6,500円'},
+];
+const LUCKY = [
+  {e:'🧸',t:'フリマで 古い おもちゃが うれた！',a:2000},
+  {e:'📝',t:'作文コンクールで 入賞！',a:3000,f:1},
+  {e:'🧹',t:'おてつだいを がんばった！',a:1500},
+  {e:'👵',t:'おばあちゃんから おこづかい',a:2500},
+  {e:'👛',t:'さいふを ひろって 交番へ。おれいを もらった',a:1000,f:1},
+  {e:'🏅',t:'しごとで ひょうしょう された！ ボーナス',a:3000},
+];
+const BAD = [
+  {e:'📱',t:'スマホを おとして 画面が バキバキ…',a:4000,l:'急な 出費は いつでも おこる。すぐ つかえる <b>よびの お金</b> が あると あんしん。'},
+  {e:'🤒',t:'かぜを ひいて びょういんへ',a:2000,l:'けがや びょうきに そなえて、ぜんぶ つかわず 少し のこして おこう。'},
+  {e:'🚲',t:'じてんしゃが パンク',a:1500,l:'ものは いつか こわれる。しゅうりの お金も かんがえて おこう。'},
+  {e:'🎁',t:'ともだちの たんじょうび プレゼント',a:1500,f:1,l:'だれかの ための お金も 大切な つかいみち。⭐+1'},
+  {e:'☔',t:'かさを わすれて 買いなおし',a:1000,l:'わすれものも お金が かかる…。'},
+  {e:'🌀',t:'たいふうで まどが われた',a:5000,l:'大きな ピンチには <b>ほけん</b> という しくみで そなえる 方法も あるよ。'},
+];
+const SHOP = [
+  {e:'🎮',t:'新作ゲーム',a:3000,f:3},
+  {e:'🎢',t:'ゆうえんちに いく',a:4000,f:4},
+  {e:'👟',t:'人気の スニーカー',a:5000,f:2,l:'人気だから 高い ものも ある。<b>ねだんに あう かち</b> が あるかな？'},
+  {e:'📚',t:'まんが まとめがい',a:2000,f:2},
+  {e:'🍣',t:'かぞくで おいしい ごはん',a:3000,f:3},
+  {e:'🎰',t:'ガチャを 10かい',a:3000,gacha:true,l:'ガチャは 何が でるか わからない。<b>つかう まえに 上限を きめる</b> のが だいじ。'},
+];
+const SCAM = [
+  {e:'🪙',t:'「ぜったい 2ばいに なる コインが あるよ！」',l:'<b>ぜったい もうかる 話は ない</b>。ふえる かもしれない ものには、へる リスクが かならず ある。'},
+  {e:'📧',t:'「当選しました！ 手数料を はらえば 賞金が もらえます」という メール',l:'当選したのに お金を はらう？ それは <b>サギの サイン</b>。'},
+  {e:'📲',t:'SNSで「スマホだけで かんたんに かせげる」と さそわれた',l:'かんたんに 大金が かせげる 話は あぶない。<b>おうちの人に そうだん</b> しよう。'},
+];
+
+let G = null;
+const sgWait = ms => new Promise(r=>setTimeout(r,ms));
+const sgAlive = id => G && G.id===id;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+function sgStop(){ G=null; document.querySelectorAll('.modal-bg,.fly').forEach(x=>x.remove()); }
+function fly(msg){ const d=document.createElement('div'); d.className='fly'; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),1400); }
+const sc = p => p.job ? 3 : 1; // しごとに ついたら 金額 3ばい
+const money = v => v<0 ? `<span class="down">しゃっきん ${yen(-v)}</span>` : yen(v);
+
+function makeSgMarket(){
+  const arr=[]; for(let i=0;i<40;i++) arr.push(0.06+(Math.random()-.5)*0.24);
+  const crash = 3 + Math.floor(Math.random()*3); // 4〜6年目に 大暴落
+  arr[crash-1] = -0.28 - Math.random()*0.07;
+  arr[crash] = 0.20 + Math.random()*0.08;
+  return {arr, crash};
+}
+
+// ---------- じゅんび ----------
+function sgSetup(){
+  sgStop(); setHome(true);
+  const chars=['🐰','🐻','🐱','🐶','🐼','🐸','🐯','🐨'];
+  const saved = store.get('sg_players', null);
+  let n = saved ? saved.length : 1;
+  let ps = saved || [{name:store.get('okane_name',''), ch:store.get('okane_char','🐰')}];
+  while(ps.length<4) ps.push({name:'', ch:chars[ps.length+1]});
+  let cpu = store.get('sg_cpu', true);
+  const draw=()=>{
+    $app.innerHTML = `
+    <div class="card">
+      <div class="sec-title">🎲 おかね すごろく</div>
+      <div class="p-text" style="font-size:12px">サイコロで すすんで、しごとに ついて、お金を つかったり ためたり ふやしたり。ゴールで いちばん「お金＋しあわせ⭐」が 多い人の かち！</div>
+      <div class="lbl" style="margin-top:12px">あそぶ 人数</div>
+      <div class="cnt">${[1,2,3,4].map(i=>`<button data-n="${i}" class="${i===n?'sel':''}">${i}人</button>`).join('')}</div>
+      <div style="margin-top:12px">${ps.slice(0,n).map((p,i)=>`
+        <div class="prow"><button class="char sel" data-i="${i}">${p.ch}</button><input class="inp" data-i="${i}" maxlength="8" placeholder="${i+1}人目の なまえ" value="${esc(p.name)}"></div>`).join('')}</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:6px"><input type="checkbox" id="cpu" ${cpu?'checked':''} ${n>=4?'disabled':''}> コンピューターの 🦊キツネくん も さんか</label>
+    </div>
+    <div class="card p-text" style="font-size:12px">
+      <b>マスの しゅるい</b><br>
+      💴きゅうりょう（とおるだけで もらえる）　🍀ラッキー　⚡ピンチ　🛍️おかいもの　❓クイズ　🌱つみたて　🕵️あやしい話　💼しごと（かならず とまる）<br>
+      <b>1周（みんなが 1回ずつ）＝ 1年</b>。毎年 つみたての お金が 世界の会社と いっしょに 増えたり 減ったり するよ。
+    </div>
+    <button class="btn pink" id="go">スタート！</button>`;
+    $app.querySelectorAll('.cnt button').forEach(b=>b.onclick=()=>{ sync(); n=+b.dataset.n; draw(); });
+    $app.querySelectorAll('.prow .char').forEach(b=>b.onclick=()=>{ sync(); const i=+b.dataset.i; ps[i].ch=chars[(chars.indexOf(ps[i].ch)+1)%chars.length]; draw(); });
+    document.getElementById('go').onclick=()=>{
+      sync();
+      const players = ps.slice(0,n).map((p,i)=>({name:p.name.trim()||`${i+1}ばんさん`, ch:p.ch}));
+      store.set('sg_players', players.map(p=>({name:p.name,ch:p.ch}))); store.set('sg_cpu', cpu);
+      if(cpu && n<4) players.push({name:'キツネくん', ch:'🦊', cpu:true});
+      sgStart(players);
+    };
+  };
+  const sync=()=>{
+    $app.querySelectorAll('.prow input').forEach(x=>ps[+x.dataset.i].name=x.value);
+    const c=document.getElementById('cpu'); if(c) cpu=c.checked;
+  };
+  draw();
+}
+
+// ---------- ゲーム本体 ----------
+function sgStart(players){
+  const m = makeSgMarket();
+  G = {id:Date.now()+Math.random(), turn:0, round:1, market:m.arr, crashRound:m.crash, lastR:null, finish:0,
+       dice:null, rolling:false, waitRoll:null, log:'サイコロを ふって スタート！',
+       players: players.map(p=>({...p, pos:0, cash:2000, nisa:0, nisaIn:0, fun:0, tsumi:0, tsumiSet:false,
+         job:null, done:false, place:0, bonus:0, sold:false, held:false, scammed:false, refused:0, debtInt:0, quizOk:0}))};
+  setHome(true);
+  sgRender();
+  sgLoop(G.id);
+}
+
+async function sgLoop(id){
+  while(sgAlive(id)){
+    const p = G.players[G.turn];
+    if(!p.done){ await sgTurn(p, id); if(!sgAlive(id)) return; }
+    if(G.players.every(x=>x.done)){ sgEnd(); return; }
+    let next = G.turn+1;
+    if(next>=G.players.length){ next=0; await sgYearEnd(id); if(!sgAlive(id)) return; }
+    G.turn = next;
+    sgRender();
+  }
+}
+
+function sgRender(){
+  if(!G) return;
+  const cur = G.players[G.turn];
+  const cells = BOARD.map((t,i)=>{
+    const r=Math.floor(i/6), c=r%2===0 ? i%6 : 5-i%6;
+    const toks=G.players.filter(p=>p.pos===i).map(p=>p.ch).join('');
+    return `<div class="sq ${cur.pos===i?'cur':''}" style="grid-row:${r+1};grid-column:${c+1};background:${SQ[t].c}"><span>${SQ[t].e}</span><small>${SQ[t].n}</small>${toks?`<div class="tk">${toks}</div>`:''}</div>`;
+  }).join('');
+  const lr = G.lastR;
+  $app.innerHTML = `
+  <div class="card" style="padding:12px">
+    <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px">
+      <span>📅 ${G.round}年目</span>
+      <span>${lr==null?'🌏 世界の会社：まだ これから':`🌏 きょねんの 世界の会社 <span class="${lr>=0?'up':'down'}">${pct(lr)}</span>`}</span>
+    </div>
+    <div class="board">${cells}</div>
+  </div>
+  <div class="pcards">${G.players.map((p,i)=>`
+    <div class="pc ${i===G.turn&&!p.done?'on':''} ${p.done?'done':''}">
+      <b>${p.ch} ${esc(p.name)}</b> ${p.job?p.job.e:''}${p.done?' 🏆':''}<br>
+      👛 ${money(p.cash)}<br>🌱 ${yen(p.nisa)}${p.tsumi?` <span class="small">(毎回${p.tsumi})</span>`:''}<br>⭐ ${p.fun}
+    </div>`).join('')}</div>
+  <div class="card center">
+    <div style="font-weight:700">${cur.ch} ${esc(cur.name)} の ばん</div>
+    <div class="dice ${G.rolling?'roll':''}" id="dice">${G.dice||'🎲'}</div>
+    ${cur.cpu ? '<div class="small">🦊 キツネくんが サイコロを ふるよ…</div>'
+      : `<button class="btn pink" id="rollBtn" ${G.waitRoll?'':'disabled'}>🎲 サイコロを ふる</button>`}
+    <div class="small" style="margin-top:8px">${G.log}</div>
+  </div>`;
+  const rb=document.getElementById('rollBtn');
+  if(rb) rb.onclick=()=>{ if(G.waitRoll){ const r=G.waitRoll; G.waitRoll=null; r(); } };
+}
+
+// モーダル（えらぶ）
+function sgAsk(p, {icon,title,body='',lesson='',choices=['OK'],disabled=[],cpuPick=0}){
+  return new Promise(res=>{
+    const m=document.createElement('div'); m.className='modal-bg';
+    m.innerHTML=`<div class="modal">
+      ${p?`<div class="who">${p.ch} ${esc(p.name)}</div>`:''}
+      <div class="big">${icon}</div><div class="ttl">${title}</div>
+      <div class="p-text center">${body}</div>
+      ${lesson?`<div class="lesson">💡 ${lesson}</div>`:''}
+      <div style="margin-top:8px">${choices.map((c,i)=>`<button class="choice" data-i="${i}" ${disabled[i]?'disabled':''}>${c}</button>`).join('')}</div>
+    </div>`;
+    document.body.appendChild(m);
+    const done=i=>{ m.remove(); res(i); };
+    const bs=m.querySelectorAll('.choice');
+    if(p && p.cpu){
+      bs.forEach(b=>b.disabled=true);
+      setTimeout(()=>{ bs[cpuPick]&&bs[cpuPick].classList.add('ok'); },1000);
+      setTimeout(()=>done(cpuPick), choices.length>1?1900:1600);
+    } else bs.forEach(b=>b.onclick=()=>done(+b.dataset.i));
+  });
+}
+
+// お金を はらう（たりない時は つみたてを うる → それでも たりなければ しゃっきん）
+function payCost(p, amt){
+  let note='';
+  if(p.cash>=amt){ p.cash-=amt; return note; }
+  let short = amt - Math.max(p.cash,0);
+  p.cash = Math.min(p.cash,0);
+  if(p.nisa>0){
+    const s=Math.min(short,p.nisa); p.nisa-=s; short-=s;
+    note+=`<br>👛 おさいふが たりなくて、つみたてを ${yen(s)} うった…`;
+  }
+  if(short>0){ p.cash-=short; note+=`<br>😱 それでも たりず ${yen(short)} の <b>しゃっきん</b>！ 毎年 10% の りそくが つくよ`; }
+  return note;
+}
+
+function payday(p){
+  const j=p.job;
+  let pay = !j ? 1000 : j.pay!=null ? j.pay : Math.round((j.min+Math.random()*(j.max-j.min))/500)*500;
+  p.cash += pay;
+  if(j && j.fun) p.fun += j.fun;
+  let t=0;
+  if(p.tsumi>0 && p.cash>0){ t=Math.min(p.tsumi,p.cash); p.cash-=t; p.nisa+=t; p.nisaIn+=t; }
+  fly(`💴 ${j?'きゅうりょう':'おこづかい'} +${yen(pay)}${t?`<br><small>🌱 つみたてへ ${yen(t)}</small>`:''}`);
+  G.log = `${p.ch} ${j?'きゅうりょう':'おこづかい'} ${yen(pay)}${t?`（うち ${yen(t)} は じどうで つみたて）`:''}`;
+}
+
+async function sgTurn(p, id){
+  sgRender();
+  // さいしょの つみたて けいかく
+  if(!p.tsumiSet){
+    p.tsumiSet=true;
+    const i = await sgAsk(p,{icon:'🌱',title:'つみたて けいかくを きめよう',
+      body:'💴マスを とおるたびに おこづかい 1,000円。<br>そのうち <b>いくらを じどうで つみたて</b> にする？',
+      lesson:'つみたてに 入れた お金は、毎年 世界の会社と いっしょに 増えたり 減ったり する。<b>もらったら さきに よけておく</b> のが ためる コツ！',
+      choices:['0円（ぜんぶ おさいふ）','200円','500円'], cpuPick:1});
+    if(!sgAlive(id)) return;
+    p.tsumi=[0,200,500][i];
+    sgRender();
+  }
+  // サイコロ
+  if(p.cpu) await sgWait(900);
+  else { await new Promise(r=>{ G.waitRoll=r; sgRender(); }); }
+  if(!sgAlive(id)) return;
+  G.rolling=true;
+  for(let k=0;k<9;k++){ G.dice=1+Math.floor(Math.random()*6); sgRender(); await sgWait(70); if(!sgAlive(id)) return; }
+  const roll=1+Math.floor(Math.random()*6);
+  G.dice=roll; G.rolling=false; G.log=`${p.ch} ${roll} が でた！`; sgRender();
+  await sgWait(500); if(!sgAlive(id)) return;
+  // すすむ
+  for(let s=0;s<roll;s++){
+    p.pos++; sgRender();
+    const t=BOARD[p.pos];
+    if(t==='P'){ payday(p); sgRender(); await sgWait(700); }
+    else await sgWait(260);
+    if(!sgAlive(id)) return;
+    if((t==='J'&&!p.job) || t==='G') break;
+  }
+  await sgLand(p, id);
+  G.dice=null;
+}
+
+async function sgLand(p, id){
+  const t=BOARD[p.pos], s=sc(p);
+  if(t==='P' || t==='S'){ await sgWait(300); return; }
+  if(t==='L'){
+    const c=pick(LUCKY), a=c.a*s; p.cash+=a; if(c.f) p.fun+=c.f;
+    await sgAsk(p,{icon:c.e,title:'🍀 ラッキー！',body:`${c.t}<br><b class="up">+${yen(a)}</b>${c.f?` ⭐+${c.f}`:''}`});
+  }
+  else if(t==='B'){
+    const c=pick(BAD), a=c.a*s; const note=payCost(p,a); if(c.f) p.fun+=c.f;
+    await sgAsk(p,{icon:c.e,title:'⚡ ピンチ！',body:`${c.t}<br><b class="down">−${yen(a)}</b>${note}`,lesson:c.l});
+  }
+  else if(t==='K'){
+    const c=pick(SHOP), a=c.a*s, can=p.cash>=a;
+    const buyPick = can && Math.random()<.6 ? 0 : 1;
+    const i=await sgAsk(p,{icon:c.e,title:'🛍️ おかいもの',
+      body:`${c.t}　<b>${yen(a)}</b><br>${c.gacha?'⭐ は 0〜5 の どれか（運しだい）':`かうと ⭐+${c.f}`}${can?'':'<br><span class="down">おさいふの お金が たりない…</span>'}`,
+      lesson:c.l||'', choices:[`かう（−${yen(a)}）`,'がまんする'], disabled:[!can,false], cpuPick:buyPick});
+    if(!sgAlive(id)) return;
+    if(i===0){
+      p.cash-=a; const f=c.gacha?Math.floor(Math.random()*6):c.f; p.fun+=f;
+      fly(`${c.e} ⭐+${f}`); G.log=`${p.ch} ${c.t} を かった！ ⭐+${f}`;
+    } else G.log=`${p.ch} がまんした`;
+  }
+  else if(t==='Q'){
+    const q=pick(QUIZ), a=1500*s;
+    const cpuPick = Math.random()<.65 ? q.a : (q.a+1)%q.c.length;
+    const i=await sgAsk(p,{icon:'❓',title:'おかね クイズ',body:`<b>${q.q}</b><br><span class="small">せいかいで +${yen(a)} ⭐+1</span>`,
+      choices:q.c.map((c,k)=>`${'ABC'[k]}. ${c}`), cpuPick});
+    if(!sgAlive(id)) return;
+    const ok=i===q.a; if(ok){ p.cash+=a; p.fun+=1; p.quizOk++; }
+    await sgAsk(p,{icon:ok?'⭕':'❌',title:ok?`せいかい！ +${yen(a)} ⭐+1`:`ざんねん… こたえは ${'ABC'[q.a]}`,lesson:q.x});
+  }
+  else if(t==='T'){
+    const has=p.cash>0;
+    const half=Math.floor(Math.max(p.cash,0)/2/100)*100, all=Math.max(p.cash,0);
+    const i=await sgAsk(p,{icon:'🌱',title:'つみたて チャンス！',
+      body:`おさいふの ${money(p.cash)} から、つみたてに 入れる？<br><span class="small">入れた お金は ふえるかも。でも へる ことも あるよ</span>`,
+      lesson:'ぜんぶ 入れると、ピンチの ときに こまる かも。<b>すぐ つかう お金は のこしておく</b> のが コツ。',
+      choices:['入れない',`はんぶん（${yen(half)}）`,`ぜんぶ（${yen(all)}）`], disabled:[false,!has||half<=0,!has], cpuPick: has&&half>0?1:0});
+    if(!sgAlive(id)) return;
+    const put=[0,half,all][i]; p.cash-=put; p.nisa+=put; p.nisaIn+=put;
+    if(put) fly(`🌱 +${yen(put)}`);
+    // つみたて額の みなおし
+    const opts = p.job ? [0,1000,2000,3000] : [0,200,500];
+    const j=await sgAsk(p,{icon:'🔁',title:'毎回の じどう つみたて',body:`いまは ${yen(p.tsumi)}。かえる？`,
+      choices:opts.map(v=>`${yen(v)}${v===p.tsumi?'（いまのまま）':''}`), cpuPick:Math.max(0,opts.indexOf(p.tsumi)) });
+    if(!sgAlive(id)) return;
+    p.tsumi=opts[j];
+  }
+  else if(t==='F'){
+    const c=pick(SCAM);
+    const i=await sgAsk(p,{icon:c.e,title:'🕵️ あやしい はなし',body:c.t,
+      choices:['おもしろそう！ のってみる','ことわって おうちの人に そうだん'], cpuPick:Math.random()<.3?0:1});
+    if(!sgAlive(id)) return;
+    if(i===0){
+      const lost=Math.max(0,Math.floor(p.cash/2)); p.cash-=lost; p.scammed=true;
+      await sgAsk(p,{icon:'💸',title:'サギだった…',body:`おさいふの はんぶん <b class="down">${yen(lost)}</b> を とられた！`,lesson:c.l});
+    } else {
+      p.fun+=1; p.refused++;
+      await sgAsk(p,{icon:'🛡️',title:'ナイス はんだん！ ⭐+1',lesson:c.l});
+    }
+  }
+  else if(t==='J'){
+    const opts=shuffle([...JOBS]).slice(0,3);
+    const i=await sgAsk(p,{icon:'💼',title:'しごとを えらぼう！',body:'これからは 💴マスで きゅうりょうが もらえるよ。<br><span class="small">ここから先は お金の 出入りが 3ばいに なるよ</span>',
+      choices:opts.map(j=>`${j.e} ${j.n}<br><span class="small" style="font-weight:400">${j.d}</span>`), cpuPick:Math.floor(Math.random()*3)});
+    if(!sgAlive(id)) return;
+    const j=opts[i]; p.job=j;
+    let note=''; if(j.cost) note=payCost(p,j.cost);
+    const k=await sgAsk(p,{icon:j.e,title:`${j.n} に なった！`,
+      body:`${j.cost?`学費 ${yen(j.cost)} を はらった${note}<br>`:''}きゅうりょうから 毎回 いくら じどうで つみたてる？`,
+      lesson:'おとなの NISA も「毎月 きまった 金額を じどうで」が 基本。<b>ほうっておいても 木が そだつ</b> しくみだよ。',
+      choices:['0円','1,000円','2,000円','3,000円'], cpuPick:1});
+    if(!sgAlive(id)) return;
+    p.tsumi=[0,1000,2000,3000][k];
+  }
+  else if(t==='G'){
+    G.finish++; p.done=true; p.place=G.finish;
+    p.bonus=[10000,5000,2000,0][Math.min(G.finish-1,3)];
+    p.cash+=p.bonus;
+    await sgAsk(p,{icon:'🏆',title:`${G.finish}ばんめに ゴール！`,body:`ゴールボーナス <b class="up">+${yen(p.bonus)}</b><br>つみたては このあとも ほかの人が ゴールするまで うごきつづけるよ`});
+  }
+  sgRender();
+}
+
+async function sgYearEnd(id){
+  const r = G.market[(G.round-1)%G.market.length];
+  const crash = G.round===G.crashRound;
+  const rows = G.players.map(p=>{ const b=p.nisa; p.nisa=Math.round(p.nisa*(1+r)); return `<tr><td>${p.ch} ${esc(p.name)}</td><td class="${p.nisa-b>=0?'up':'down'}">${p.nisa-b>=0?'+':''}${yen(p.nisa-b)}</td></tr>`; }).join('');
+  let debt='';
+  G.players.forEach(p=>{ if(p.cash<0){ const x=Math.ceil(-p.cash*0.1/100)*100; p.cash-=x; p.debtInt+=x; debt+=`<br>${p.ch} しゃっきんの りそく <span class="down">−${yen(x)}</span>`; }});
+  G.lastR = r;
+  const news = crash ? '📰 大ニュース！ 世界中で 株が 大きく 下がった！'
+    : r>=0.12 ? '📰 世界の 会社が 大かつやく！' : r>=0 ? '📰 世界の 会社は まあまあ 元気' : '📰 ちょっと けいきが わるい 年…';
+  sgRender();
+  await sgAsk(null,{icon:r>=0?'📈':'📉',title:`${G.round}年目が おわった！`,
+    body:`${news}<div class="market ${r>=0?'up':'down'}">${pct(r)}</div><div class="small">みんなの つみたての うごき</div><table class="ptable">${rows}</table>${debt}`,
+    lesson: G.round===1 ? '1年ごとに 世界の会社の ねだんが かわって、<b>つみたての お金も いっしょに 増えたり 減ったり</b> するよ。'
+      : debt && !G.debtTold ? (G.debtTold=true,'しゃっきんには <b>りそく</b> が つく。かえさないと どんどん 大きく なるよ！') : '',
+    choices:['つぎの 年へ ▶']});
+  if(!sgAlive(id)) return;
+  if(crash){
+    for(const p of G.players){
+      if(p.nisa<=0) continue;
+      const i=await sgAsk(p,{icon:'😱',title:'つみたて どうする？',
+        body:`みんな「こわい！ うっちゃえ！」と 大さわぎ…<br>つみたて <b>${yen(p.nisa)}</b> を どうする？`,
+        choices:['💨 ぜんぶ うって おさいふに 入れる','🧘 あわてず そのまま もちつづける'], cpuPick:Math.random()<.5?0:1});
+      if(!sgAlive(id)) return;
+      if(i===0){ p.cash+=p.nisa; p.nisa=0; p.sold=true; p.tsumi=0;
+        await sgAsk(p,{icon:'📉',title:'うって しまった…',lesson:'下がった ときに うると、<b>そんが そのまま きまって</b> しまう。このあと もどっても とりかえせない…（じどう つみたても とまったよ）'}); }
+      else { p.held=true;
+        await sgAsk(p,{icon:'🧘',title:'どっしり ホールド！',lesson:'れきしを みると、大きく 下がっても <b>数年で もどる</b> ことが 多かった。<b>長く つづける人が 強い</b>（でも ぜったい ではないよ）。'}); }
+      if(!sgAlive(id)) return;
+    }
+  }
+  G.round++;
+  sgRender();
+}
+
+function sgEnd(){
+  const ps=[...G.players].map(p=>({...p,total:p.cash+p.nisa+p.fun*STAR_VALUE})).sort((a,b)=>b.total-a.total);
+  const medal=['🥇','🥈','🥉','🎖️','🎖️'];
+  confetti();
+  setHome(true);
+  $app.innerHTML = `
+  <div class="card center">
+    <div style="font-size:56px">🏆</div>
+    <div style="font-weight:700;font-size:20px;margin:4px 0">けっか はっぴょう！</div>
+    <div class="small">${G.round-1}年間 の 人生すごろく。　点数 ＝ おさいふ ＋ つみたて ＋ ⭐×${STAR_VALUE.toLocaleString()}円</div>
+  </div>
+  <div class="card">${ps.map((p,i)=>{
+    const gain=p.nisa-p.nisaIn; const notes=[];
+    if(p.nisaIn>0) notes.push(gain>=0?`🌱 つみたてが <b class="up">${yen(gain)}</b> ふえた！`:`🌱 つみたては ${yen(-gain)} へった…`);
+    if(p.held) notes.push('🧘 暴落でも もちつづけた');
+    if(p.sold) notes.push('💨 暴落で うってしまった');
+    if(p.scammed) notes.push('💸 サギに ひっかかった');
+    if(p.refused) notes.push(`🛡️ あやしい話を ${p.refused}かい ことわった`);
+    if(p.debtInt) notes.push(`😱 しゃっきんの りそくを ${yen(p.debtInt)} はらった`);
+    if(p.quizOk) notes.push(`❓ クイズ ${p.quizOk}もん せいかい`);
+    return `<div class="rank"><div class="m">${medal[i]}</div><div style="flex:1">
+      <div><b>${p.ch} ${esc(p.name)}</b> ${p.job?`<span class="small">${p.job.e}${p.job.n}</span>`:''}</div>
+      <div class="tot">${yen(p.total)}</div>
+      <div class="small">👛 ${p.cash<0?'しゃっきん '+yen(-p.cash):yen(p.cash)}　🌱 ${yen(p.nisa)}　⭐ ${p.fun}（${yen(p.fun*STAR_VALUE)}）</div>
+      <div class="p-text" style="font-size:12px;margin-top:4px">${notes.join('<br>')}</div></div></div>`;
+  }).join('')}</div>
+  <div class="card p-text">
+    <b>すごろくで わかったこと</b>
+    <ul style="margin-top:6px">
+      <li>きゅうりょうから <b>さきに じどうで つみたて</b> すると、しぜんに たまる</li>
+      <li>ピンチは とつぜん くる。<b>よびの お金</b> を のこしておこう</li>
+      <li>投資は 下がる 年も ある。<b>あわてて うらない</b></li>
+      <li>しゃっきんには りそくが つく。<b>かえすのが たいへん</b></li>
+      <li>「ぜったい もうかる」は <b>サギ</b> の サイン</li>
+      <li>お金を ためるだけじゃなく、<b>たのしく つかう⭐</b> のも 大切</li>
+    </ul>
+    <div class="lesson">💬 おうちの人と：「どの マスが いちばん ドキドキした？」「つぎは どう する？」</div>
+  </div>
+  <button class="btn pink" onclick="sgSetup()">🔁 もう1回 あそぶ</button>
+  <button class="btn gray" onclick="goHome()">🏠 メニューへ</button>`;
+  G=null;
 }
 
 goHome();
