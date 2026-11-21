@@ -167,6 +167,13 @@ body{font-family:'Zen Maru Gothic','Hiragino Maru Gothic Pro',sans-serif;backgro
 .sg-ybanner b{font-size:44px;} .sg-ybanner small{font-size:13px;opacity:.95;}
 @keyframes ybf{0%{opacity:0}10%{opacity:1}85%{opacity:1}100%{opacity:0}}
 @keyframes ybp{0%{transform:scale(.4) rotate(-8deg)}18%{transform:scale(1.05) rotate(2deg)}25%{transform:scale(1) rotate(0)}100%{transform:scale(1)}}
+
+.sq .stg{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:8px;font-style:normal;font-weight:700;white-space:nowrap;border-radius:8px;padding:0 4px;z-index:3;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+.sq.life{box-shadow:inset 0 0 0 2px #fdba74;}
+.board{row-gap:10px;}
+.pc-age{font-size:10px;border-radius:8px;padding:1px 6px;font-weight:700;}
+.sg-yy{font-size:9px;opacity:.9;margin-top:2px;}
+.sg-lifelog{margin-top:6px;font-size:12px;} .sg-lifelog summary{cursor:pointer;color:#2563eb;font-weight:700;} .sg-lifelog div{line-height:1.7;color:#555;}
 /* ===== おかねの がっこう ===== */
 .sc-path{position:relative;padding:4px 0 10px;}
 .sc-node{display:flex;align-items:center;gap:12px;width:calc(100% - 70px);padding:12px 14px;margin-bottom:10px;border:3px solid #e0e7ff;border-radius:22px;background:#fff;font-family:inherit;text-align:left;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.05);}
@@ -737,7 +744,185 @@ const SQ = {
   N:{e:'📰',n:'ニュース',c:'#f5f5f4'},
   Y:{e:'🎂',n:'おいわい',c:'#fef3c7'},
 };
-const BOARD = ('S'+'PLQKTBWPFEJ'+'PIKBNQPVDRTC'+'PLZFQNPKBYWT'+'PQRLB'+'G').split(''); // 42マス（11番目=しごと）
+// =====================================================
+// ===== 人生すごろく：ステージ・ライフイベント =====
+// =====================================================
+const LIFE_BOARD = [
+ // 👦 こども（0〜14）
+ 'S','P','X:school','L','Q','K','X:otoshidama','T','F','P','X:club','W','Q','X:trip','X:grad',
+ // 🧑 わかもの（15〜34）
+ 'P','J','X:alone','X:nisa','B','P','X:car','K','N','X:marry','P','V','X:baby','I','Q','P','X:house','C','R','Z',
+ // 🧔 おとな（35〜53）
+ 'P','X:promo','F','X:edu','P','N','X:jobchange','B','D','P','X:sick','Q','X:parent','P','K','Y','T','B','X:retire',
+ // 🧓 シニア（54〜68）
+ 'P','X:travel','F','X:hobby','P','X:grandkid','N','X:hospital','P','X:health','Q','D','P','X:memory','L',
+ // 🎂 ゴール
+ 'G'];
+const STAGES=[
+  {from:0, e:'👦',n:'こども',c:'#fde68a'},
+  {from:15,e:'🧑',n:'わかもの',c:'#bbf7d0'},
+  {from:35,e:'🧔',n:'おとな',c:'#bfdbfe'},
+  {from:54,e:'🧓',n:'シニア',c:'#e9d5ff'},
+];
+const stageOf=i=>[...STAGES].reverse().find(s=>i>=s.from);
+const AGE_KEYS=[[0,6],[15,18],[35,40],[53,65],[68,95],[69,100]];
+function ageAt(i){ for(let k=0;k<AGE_KEYS.length-1;k++){ const [a,x]=AGE_KEYS[k],[b,y]=AGE_KEYS[k+1]; if(i<=b) return Math.round(x+(y-x)*(i-a)/(b-a)); } return 100; }
+const YEARS_PER_ROUND=5;
+
+const LIFE={
+  school:{e:'🎒',n:'にゅうがく'}, otoshidama:{e:'🧧',n:'おとしだま'}, club:{e:'⚽',n:'ぶかつ'}, trip:{e:'🚌',n:'しゅうがく旅行'}, grad:{e:'🎓',n:'しんろ',stop:1},
+  alone:{e:'🏠',n:'ひとりぐらし'}, nisa:{e:'🎁',n:'NISA口座'}, car:{e:'🚗',n:'くるま'}, marry:{e:'💒',n:'けっこん'}, baby:{e:'👶',n:'こどもが うまれた'}, house:{e:'🏡',n:'いえ'},
+  promo:{e:'📈',n:'しょうしん'}, edu:{e:'🏫',n:'こどもの 学費'}, jobchange:{e:'🔄',n:'てんしょく'}, sick:{e:'🏥',n:'びょうき'}, parent:{e:'👵',n:'おやの かいご'}, retire:{e:'🎉',n:'ていねん',stop:1},
+  travel:{e:'✈️',n:'せかい旅行'}, hobby:{e:'🎨',n:'しゅみ'}, grandkid:{e:'🍼',n:'まごが うまれた'}, hospital:{e:'🚑',n:'にゅういん'}, health:{e:'💪',n:'けんこう'}, memory:{e:'📸',n:'おもいで'},
+};
+const sqOf=i=>{ const t=BOARD[i]; if(t.startsWith('X:')){ const L=LIFE[t.slice(2)]; return {e:L.e,n:L.n,c:'#fff7ed',life:1}; }
+  if(t==='P'){ const st=stageOf(i); return {...SQ.P, n: st.from===0?'おこづかい':st.from===54?'ねんきん':'きゅうりょう'}; }
+  if(t==='G') return {e:'🎂',n:'100さい！',c:SQ.G.c};
+  return SQ[t]; };
+const isStopTile=(p,i)=>{ const t=BOARD[i]; return t==='G' || (t==='J'&&!p.job) || (t==='X:grad'&&!p.gradDone) || (t==='X:retire'&&!p.retired); };
+const lifeLog=(p,txt)=>{ p.life.push(`${ageAt(p.pos)}さい ${txt}`); };
+const HOUSE_VALUE=30000;
+
+function payday(p){
+  const j=p.job, st=stageOf(p.pos);
+  let pay, label;
+  if(p.retired){ pay=p.pension; label='ねんきん'; }
+  else if(j){ pay=(j.pay!=null ? j.pay : Math.round((j.min+Math.random()*(j.max-j.min))/500)*500) + p.skill*1000 + p.raise + (p.partner?2500:0); label='きゅうりょう'; }
+  else { pay=1000+p.skill*200; label='おこづかい'; }
+  if(j && j.fun && !p.retired) p.fun+=j.fun;
+  p.cash+=pay; sfx('coin');
+  const costs=[];
+  if(p.rent && !p.ownHouse) costs.push(['🏠やちん',p.rent]);
+  if(p.houseLoan>0){ const x=Math.min(p.houseLoan,p.housePay); p.houseLoan-=x; costs.push(['🏡ローン',x]); }
+  if(p.car) costs.push(['🚗くるま',600]);
+  if(p.kids && !p.retired) costs.push(['👶こそだて',1500*p.kids]);
+  if(p.retired) costs.push(['🍚せいかつひ',p.living]);
+  if(p.loan>0){ const x=Math.min(p.loan,p.loanPay); p.loan-=x; costs.push(['💳あとばらい',x]); }
+  const tot=costs.reduce((a,c)=>a+c[1],0); p.cash-=tot;
+  let wd=0;
+  if(p.retired && p.cash<0 && p.nisa>0){ wd=Math.min(p.nisa,-p.cash); p.nisa-=wd; p.nisaIn=Math.max(0,p.nisaIn-wd); p.cash+=wd; p.withdrawn+=wd; }
+  let t=0;
+  if(!p.retired && p.tsumi>0 && p.cash>0){ t=Math.min(p.tsumi,p.cash); p.cash-=t; p.nisa+=t; p.nisaIn+=t; }
+  fly(`💴 ${label} +${yen(pay)}${costs.map(c=>`<br><small>${c[0]} −${yen(c[1])}</small>`).join('')}${t?`<br><small>🌱 つみたてへ ${yen(t)}</small>`:''}${wd?`<br><small>🌱 つみたてを とりくずし ${yen(wd)}</small>`:''}`);
+  G.log = `${p.ch} ${label} ${yen(pay)}${tot?`・しはらい ${yen(tot)}`:''}${t?`・つみたて ${yen(t)}`:''}${wd?`・とりくずし ${yen(wd)}`:''}`;
+}
+
+// ライフイベント
+async function sgLife(p,id,key){
+  const s=sc(p); const A=o=>sgAsk(p,o);
+  const ok=()=>sgAlive(id);
+  switch(key){
+  case 'school': { const a=800; p.cash-=a;
+    await A({icon:'🎒',title:'しょうがっこうに にゅうがく！',body:`ランドセルや ふでばこを そろえたよ。<b class="down">−${yen(a)}</b>（おうちの人も たくさん だして くれた）`,lesson:'がっこうの どうぐや きゅうしょく。<b>まなぶ ためにも お金が かかって いる</b> んだ。'}); lifeLog(p,'しょうがっこうに 入学'); break; }
+  case 'otoshidama': { const a=5000;
+    const i=await A({icon:'🧧',title:'おとしだまを もらった！ 5,000円',body:'どう わける？',choices:['🍭 ぜんぶ つかう（⭐+3）','🐷 はんぶん おさいふ・🌱 はんぶん つみたて','🌱 ぜんぶ つみたて'],cpuPick:1,
+      lesson:'こどもの ころから つみたてた お金は、<b>長い 時間</b> を かけて 大きく そだつ チャンスが ある。'});
+    if(!ok()) return;
+    if(i===0) p.fun+=3; else if(i===1){ p.cash+=2500; p.nisa+=2500; p.nisaIn+=2500; } else { p.nisa+=5000; p.nisaIn+=5000; }
+    break; }
+  case 'club': { const a=1500;
+    const i=await A({icon:'⚽',title:'ぶかつを はじめる？',body:`ユニフォームや どうぐで <b>${yen(a)}</b>。なかまが できて たのしいよ。`,choices:[`はじめる（−${yen(a)}・⭐+3）`,'こんかいは やめる'],cpuPick:0});
+    if(!ok()) return; if(i===0){ p.cash-=a; p.fun+=3; lifeLog(p,'ぶかつに むちゅう'); } break; }
+  case 'trip': {
+    const i=await A({icon:'🚌',title:'しゅうがく旅行！ おこづかいは 3,000円まで',body:'おみやげ どうする？',choices:['🎁 3,000円 ぜんぶ つかう（⭐+3）','🧮 よさん 1,500円で かしこく（⭐+2）','💰 つかわない'],cpuPick:1,
+      lesson:'さきに <b>よさん（つかう 上限）</b> を きめると、つかいすぎない。'});
+    if(!ok()) return; const a=[3000,1500,0][i]; p.cash-=a; p.fun+=[3,2,0][i]; lifeLog(p,'しゅうがく旅行'); break; }
+  case 'grad': { p.gradDone=1;
+    const i=await A({icon:'🎓',title:'しんろを きめよう',body:'こうこうを そつぎょう！ これから どうする？',choices:['🏫 大学・せんもん学校へ（学費 −8,000円・しょうらい きゅうりょう アップ）','💼 すぐ はたらく（いま お金が かからない）'],cpuPick:Math.random()<.5?0:1,
+      lesson:'べんきょうに お金を つかう ことも <b>じぶんへの とうし</b>。ただ、どちらが いいかは 人それぞれ。'});
+    if(!ok()) return;
+    if(i===0){ const note=payCost(p,8000); p.skill+=2; lifeLog(p,'大学へ すすんだ'); if(note) await A({icon:'💸',title:'学費を はらった',body:note.replace(/^<br>/,'')}); }
+    else { p.cash+=3000; lifeLog(p,'はやくから はたらく ことに'); await A({icon:'💼',title:'はやく はたらく！',body:'アルバイトで ためた <b class="up">+3,000円</b>'}); }
+    break; }
+  case 'alone': { p.rent=1500;
+    await A({icon:'🏠',title:'ひとりぐらしを はじめた！',body:'これからは 💴マスの たびに <b>やちん 1,500円</b> を はらうよ。',lesson:'やちん・スマホ代・でんき代 など、<b>まいつき かならず かかる お金（こていひ）</b> が ある。'}); lifeLog(p,'ひとりぐらし スタート'); break; }
+  case 'nisa': {
+    const i=await A({icon:'🎁',title:'NISA口座を ひらく？',body:'NISAで つみたて すると、<b>ふえた ぶんに ぜいきんが かからない</b>！<br><span class="small">ひらかないと、さいごに もうけの やく20%が ぜいきんで ひかれるよ</span>',choices:['ひらく！','あとで いいや'],cpuPick:Math.random()<.75?0:1,
+      lesson:'NISA は 国が つくった「投資の もうけに ぜいきんが かからない」とくべつな 口座。'});
+    if(!ok()) return; if(i===0){ p.nisaAcct=1; lifeLog(p,'NISA口座を ひらいた'); }
+    const opts=[0,1000,2000,3000];
+    const k=await A({icon:'🌱',title:'まいかいの つみたて額',body:`いまは ${yen(p.tsumi)}。きゅうりょうから まいかい いくら つみたてる？`,choices:opts.map(v=>yen(v)),cpuPick:1});
+    if(!ok()) return; p.tsumi=opts[k]; break; }
+  case 'car': { const a=10000;
+    const i=await A({icon:'🚗',title:'くるまを かう？',body:`<b>${yen(a)}</b>。べんりで たのしい！ でも ガソリン代や ほけんで まいかい <b>600円</b> かかるよ。`,choices:[`かう（⭐+4）`,'でんしゃと じてんしゃで いい'],cpuPick:Math.random()<.5?0:1,
+      lesson:'ものは <b>かった あとにも お金が かかる</b>（いじひ）ことが ある。'});
+    if(!ok()) return; if(i===0){ const note=payCost(p,a); p.car=1; p.fun+=4; lifeLog(p,'くるまを かった'); if(note) await A({icon:'💸',title:'お金が たりなかった',body:note.replace(/^<br>/,'')}); } break; }
+  case 'marry': {
+    const i=await A({icon:'💒',title:'けっこん する？',body:'すてきな パートナーに であった！',choices:['💒 けっこんしきを あげる（−8,000円・⭐+6）','💍 しきは あげずに けっこん（⭐+4）','🙂 ひとりの じんせいを たのしむ（⭐+2）'],cpuPick:Math.floor(Math.random()*3),
+      lesson:'けっこんすると ふたりで はたらいて <b>しゅうにゅうが ふえる</b> ことも。でも くらしの お金も ふえる。いろんな いきかたが あるよ。'});
+    if(!ok()) return;
+    if(i<2){ p.partner=1; p.fun+=i===0?6:4; if(i===0) p.cash-=8000; lifeLog(p,'けっこんした 💒'); fly('💒 これから ふたりで はたらくよ（きゅうりょう +2,500）'); }
+    else { p.fun+=2; p.cash+=2000; lifeLog(p,'ひとりの じんせいを えらんだ'); }
+    break; }
+  case 'baby': {
+    if(!p.partner){ await A({icon:'🐶',title:'ペットを むかえた！',body:'いぬと くらしはじめた。⭐+3<br><span class="small">えさ代 −1,000円</span>'}); p.cash-=1000; p.fun+=3; lifeLog(p,'ペットを むかえた'); break; }
+    const i=await A({icon:'👶',title:'あかちゃんが うまれた！',body:'これからは 💴マスの たびに <b>こそだて 1,500円</b>。でも かぞくが ふえて しあわせ！',choices:['👶 1人（⭐+5）','👶👶 ふたごだった！（⭐+8）'],cpuPick:0,
+      lesson:'こどもを そだてるには <b>長い あいだ お金が かかる</b>。こども向けの つみたて（こどもNISA）で じゅんびする かぞくも いるよ。'});
+    if(!ok()) return; p.kids=i===0?1:2; p.fun+=i===0?5:8; lifeLog(p,`こどもが うまれた ${'👶'.repeat(p.kids)}`); break; }
+  case 'house': {
+    const i=await A({icon:'🏡',title:'いえを かう？',body:`いえの ねだん <b>${yen(HOUSE_VALUE)}</b>。<br>ローンなら 頭金 5,000円 ＋ 💴マスの たびに 4,000円 ×8回（りそく こみ）。<br>かわなければ やちんを はらい つづけるよ。`,
+      choices:['🏡 ローンで かう（⭐+4・さいごに いえの かち）','🏢 ちんたいの まま'],cpuPick:Math.random()<.5?0:1,
+      lesson:'ローンは <b>りそくの ぶん 高く なる</b> けど、さいごに いえが じぶんの ものに なる。ちんたいは 身軽。どっちも メリットが ある。'});
+    if(!ok()) return;
+    if(i===0){ p.cash-=5000; p.ownHouse=1; p.houseLoan=32000; p.housePay=4000; p.fun+=4; lifeLog(p,'いえを かった 🏡'); }
+    else { if(!p.rent) p.rent=1500; p.rent+=500; lifeLog(p,'ちんたいで くらす'); await A({icon:'🏢',title:'ひろい へやに ひっこし',body:'やちんが すこし 上がったよ（+500円）'}); }
+    break; }
+  case 'promo': { p.raise+=1500;
+    await A({icon:'📈',title:'しょうしん！',body:'がんばりが みとめられた！ これから きゅうりょう <b class="up">+1,500円</b>',lesson:'けいけんを つむと きゅうりょうが 上がる ことも。ふえた ぶんを <b>つみたてに まわす</b> と みらいが らくに。'});
+    lifeLog(p,'しょうしん 📈');
+    if(p.tsumi<3000){ const k=await A({icon:'🌱',title:'つみたてを ふやす？',body:`いまは ${yen(p.tsumi)}`,choices:['+1,000円 ふやす','そのまま'],cpuPick:0}); if(!ok()) return; if(k===0) p.tsumi+=1000; }
+    break; }
+  case 'edu': {
+    if(!p.kids){ const a=3000; p.cash-=a; await A({icon:'📚',title:'おとなの まなびなおし',body:`えいごを べんきょう。<b class="down">−${yen(a)}</b>・きゅうりょう +500円`,lesson:'おとなに なっても まなび つづけると、しごとの はばが ひろがるよ。'}); p.raise+=500; lifeLog(p,'まなびなおし'); break; }
+    const a=12000*p.kids; const note=payCost(p,a);
+    await A({icon:'🏫',title:'こどもが 大学に 入学！',body:`学費 <b class="down">−${yen(a)}</b>${note}`,lesson:'大学の 学費は とても 高い。<b>はやくから じゅんび</b>（つみたて）して おくと あんしん。'});
+    lifeLog(p,'こどもの 大学の 学費を はらった'); break; }
+  case 'jobchange': {
+    const opts=shuffle([...JOBS]).slice(0,2);
+    const i=await A({icon:'🔄',title:'てんしょく する？',body:`いまは ${p.job?p.job.e+p.job.n:'—'}。あたらしい しごとの さそいが きた！`,choices:[...opts.map(j=>`${j.e} ${j.n}に てんしょく`),'いまの しごとを つづける'],cpuPick:Math.random()<.3?0:2});
+    if(!ok()) return; if(i<2){ p.job=opts[i]; lifeLog(p,`${p.job.n}に てんしょく`); await A({icon:p.job.e,title:`${p.job.n}に なった！`,body:p.job.d}); }
+    break; }
+  case 'sick': { const a=6000*(p.ins?0:1);
+    if(p.ins){ p.ins--; await A({icon:'☂️',title:'びょうきで にゅういん… でも ほけんで あんしん',body:'入院費は ほけんで 0円！',lesson:'<b>ほけん</b> は 大きな ピンチに そなえる しくみ。'}); }
+    else { const note=payCost(p,6000); await A({icon:'🏥',title:'びょうきで にゅういん…',body:`入院費 <b class="down">−6,000円</b>${note}`,lesson:'けがや びょうきに そなえて、<b>よびの お金</b> や <b>ほけん</b> を かんがえよう。'}); }
+    lifeLog(p,'びょうきで にゅういん'); break; }
+  case 'parent': { const note=payCost(p,4000);
+    await A({icon:'👵',title:'おやの かいご',body:`おとうさん・おかあさんの おせわを することに。<b class="down">−4,000円</b>${note} ⭐+2`,lesson:'かぞくを ささえる ための お金も じんせいの 大切な つかいみち。'}); p.fun+=2; lifeLog(p,'おやの かいごを した'); break; }
+  case 'retire': { p.retired=1; const bonus=p.job?15000:3000; p.cash+=bonus; p.pension=Math.round(((p.job&&p.job.pay)||6000)*.5/500)*500+(p.partner?1500:0); p.living=6000+(p.partner?1500:0);
+    sfx('good');
+    await A({icon:'🎉',title:'65さい ていねん たいしょく！',body:`ながい あいだ おつかれさま！<br>たいしょくきん <b class="up">+${yen(bonus)}</b><br>これからは 💴マスで <b>ねんきん ${yen(p.pension)}</b>、せいかつひ <b>${yen(p.living)}</b> を はらうよ。<br><span class="small">たりない ぶんは おさいふ → 🌱つみたての じゅんに とりくずす</span>`,
+      lesson:'ねんきんだけでは くらしの お金が <b>たりない</b> ことが 多い。わかい ころからの <b>つみたて</b> が ろうごの たすけに なる。'});
+    lifeLog(p,'ていねん たいしょく 🎉'); break; }
+  case 'travel': { const a=8000;
+    const i=await A({icon:'✈️',title:'せかい旅行に いく？',body:`<b>${yen(a)}</b>。ずっと いきたかった 国へ！`,choices:[`いく！（⭐+6）`,'ちかくの おんせんで（−2,000円・⭐+2）'],cpuPick:p.cash+p.nisa>a*2?0:1,
+      lesson:'ためた お金は <b>しあわせな じかん</b> の ために つかう ことも 大切。'});
+    if(!ok()) return; if(i===0){ const note=payCost(p,a); p.fun+=6; lifeLog(p,'せかい旅行 ✈️'); if(note) await A({icon:'💸',title:'おさいふが たりなくて…',body:note.replace(/^<br>/,'')}); } else { p.cash-=2000; p.fun+=2; } break; }
+  case 'hobby': { const a=2000;
+    const i=await A({icon:'🎨',title:'あたらしい しゅみ',body:'え・つり・ガーデニング… なにか はじめる？',choices:[`はじめる（−${yen(a)}・⭐+3）`,'のんびり すごす（⭐+1）'],cpuPick:0});
+    if(!ok()) return; if(i===0){ p.cash-=a; p.fun+=3; lifeLog(p,'しゅみを はじめた 🎨'); } else p.fun+=1; break; }
+  case 'grandkid': {
+    const i=await A({icon:'🍼',title:p.kids?'まごが うまれた！':'しんせきの あかちゃんが うまれた！',body:'おいわいを する？',choices:['🎁 3,000円 おいわい（⭐+4）','💌 てがみを おくる（⭐+1）'],cpuPick:0,
+      lesson:'じぶんの ための お金だけで なく、<b>つぎの せだい</b> の ために つかう ことも できる。'});
+    if(!ok()) return; if(i===0){ p.cash-=3000; p.fun+=4; } else p.fun+=1; lifeLog(p,p.kids?'まごが うまれた 🍼':'あかちゃんを おいわい'); break; }
+  case 'hospital': {
+    if(p.ins){ p.ins--; await A({icon:'☂️',title:'にゅういん… でも ほけんで あんしん',body:'入院費は ほけんで 0円！'}); }
+    else { const note=payCost(p,5000); await A({icon:'🚑',title:'にゅういん',body:`入院費 <b class="down">−5,000円</b>${note}`,lesson:'としを とると びょうきも ふえる。<b>ろうごの お金</b> には いりょうひも ふくめて おこう。'}); }
+    lifeLog(p,'にゅういん'); break; }
+  case 'health': { p.fun+=2;
+    await A({icon:'💪',title:'まいにち さんぽで げんき！',body:'けんこうは お金で かえない たから。⭐+2',lesson:'けんこうで いると いりょうひも へる。<b>からだも 大切な しさん</b>。'}); break; }
+  case 'memory': { p.fun+=p.life.length>=8?4:2;
+    await A({icon:'📸',title:'おもいでの アルバム',body:`いままでの じんせいを ふりかえった。⭐+${p.life.length>=8?4:2}<div class="sg-legend small">${p.life.slice(-6).join('<br>')}</div>`}); break; }
+  }
+}
+
+function lifeScore(p){
+  const gain=Math.max(0,p.nisa-p.nisaIn);
+  const tax=p.nisaAcct?0:Math.round(gain*.20315);
+  const house=p.ownHouse?Math.max(0,HOUSE_VALUE-p.houseLoan):0;
+  return {tax,house,total:p.cash+p.nisa-tax+house-p.loan+p.fun*STAR_VALUE};
+}
+
+const BOARD = LIFE_BOARD; // 70マス（6さい→100さい）
 const STAR_VALUE = 2000; // ⭐1こ = 2,000円 として 点数に する
 const JOBS = [
   {e:'🍰',n:'パティシエ',pay:6000,d:'おかしで みんなを えがおに。きゅうりょう 6,000円'},
@@ -800,10 +985,10 @@ const sc = p => p.job ? 3 : 1; // しごとに ついたら 金額 3ばい
 const money = v => v<0 ? `<span class="down">しゃっきん ${yen(-v)}</span>` : yen(v);
 
 function makeSgMarket(){
-  const arr=[]; for(let i=0;i<40;i++) arr.push(0.06+(Math.random()-.5)*0.24);
-  const crash = 3 + Math.floor(Math.random()*3); // 4〜6年目に 大暴落
-  arr[crash-1] = -0.28 - Math.random()*0.07;
-  arr[crash] = 0.20 + Math.random()*0.08;
+  const arr=[]; for(let i=0;i<40;i++) arr.push(0.2+(Math.random()-.5)*0.36); // 1ラウンド＝5年ぶん
+  const crash = 4 + Math.floor(Math.random()*4); // 4〜7ラウンドめに 大暴落
+  arr[crash-1] = -0.3 - Math.random()*0.08;
+  arr[crash] = 0.35 + Math.random()*0.1;
   return {arr, crash};
 }
 
@@ -859,7 +1044,7 @@ function sgStart(players){
   G = {id:Date.now()+Math.random(), turn:0, round:1, market:m.arr, crashRound:m.crash, lastR:null, finish:0,
        dice:null, rolling:false, waitRoll:null, log:'サイコロを ふって スタート！',
        players: players.map(p=>({...p, pos:0, cash:2000, nisa:0, nisaIn:0, fun:0, tsumi:0, tsumiSet:false,
-         job:null, done:false, place:0, bonus:0, sold:false, held:false, scammed:false, refused:0, debtInt:0, quizOk:0, skip:0, ins:0, skill:0, loan:0, loanPay:0, gave:0}))};
+         job:null, done:false, place:0, bonus:0, sold:false, held:false, scammed:false, refused:0, debtInt:0, quizOk:0, skip:0, ins:0, skill:0, loan:0, loanPay:0, gave:0, life:[], raise:0, partner:0, kids:0, rent:0, ownHouse:0, houseLoan:0, housePay:0, car:0, retired:0, pension:0, living:0, nisaAcct:0, gradDone:0, withdrawn:0}))};
   G.use3d = !!window.THREE && webglOK();
   sgaBgm(true);
   setHome(true);
@@ -867,16 +1052,17 @@ function sgStart(players){
   sgTutorial(G.id).then(async()=>{ if(!G) return; const id=G.id; await sgYearBanner(); if(sgAlive(id)) sgLoop(id); });
 }
 const SG_HELP=[
-  {icon:'🎲',title:'あそびかた ①　すすみかた',body:'じゅんばんに <b>サイコロ</b> を ふって、<b>1→2→3…</b> と マスの ばんごうの じゅんに すすむよ。<br>⬅➡⬇ の やじるしが すすむ むき。<br>さいごの <b>🏆ゴール</b> を めざそう！'},
-  {icon:'👛🌱⭐',title:'あそびかた ②　3つの たから',body:'<b>👛 おさいふ</b>：いま つかえる お金<br><b>🌱 つみたて</b>：1年ごとに 増えたり 減ったり する お金<br><b>⭐ たのしさ</b>：おかいもの などで ふえる<br><br>ゴールで <b>ぜんぶ あわせて いちばん 多い人</b> の かち！<span class="small">（⭐1こ ＝ 2,000円 として けいさん）</span>'},
-  {icon:'🗺️',title:'あそびかた ③　マスの いみ',body:'<div class="sg-legend">💴 <b>きゅうりょう</b>：とおるだけで お金が もらえる<br>🍀 <b>ラッキー</b>：お金が もらえる<br>⚡ <b>ピンチ</b>：お金が へっちゃう<br>🛍️ <b>おかいもの</b>：かうと ⭐が ふえる<br>❓ <b>クイズ</b>：せいかいで お金と ⭐<br>🌱 <b>つみたて</b>：おさいふから つみたてへ<br>🕵️ <b>あやしい</b>：あやしい話に ちゅうい！<br>💼 <b>しごと</b>：かならず とまって しごとを えらぶ</div>'},
-  {icon:'🆕',title:'あそびかた ④　ほかの マス',body:'<div class="sg-legend">🚀 <b>ちかみち</b>：2マス すすむ　🌀 <b>まいご</b>：2マス もどる<br>😴 <b>おやすみ</b>：つぎは 1回 やすみ<br>☂️ <b>ほけん</b>：入ると ピンチ2回を まもって くれる<br>🎓 <b>しかく</b>：べんきょうで きゅうりょう アップ<br>🏪 <b>おみせ</b>：せいこうで 2ばい！ しっぱいも…<br>💳 <b>あとばらい</b>：いま かえる けど あとで 1.2ばい<br>🤝 <b>きふ</b>：だれかを たすけて ⭐<br>📰 <b>ニュース</b>：みんなの つみたてが うごく<br>🎂 <b>おいわい</b>：みんなから プレゼント</div>'},
-  {icon:'📅',title:'あそびかた ⑤　1年が たつと…',body:'みんなが 1回ずつ ふったら <b>1年</b>。<br>1年ごとに 世界の会社の ねだんが かわって、<b>🌱つみたての お金が 増えたり 減ったり</b> するよ。<br>どこかで <b>大ぼうらく</b> が くるかも…!?'},
+  {icon:'🎂',title:'じんせい すごろく ①',body:'<b>6さいの こども</b> から スタート！ サイコロで すすむと <b>としを とって</b>、<br>👦こども → 🧑わかもの → 🧔おとな → 🧓シニア と すすみ、<b>🎂100さい</b> が ゴール。<br><span class="small">⬅➡⬇ の やじるしの じゅんに すすむよ</span>'},
+  {icon:'👛🌱⭐🏡',title:'じんせい すごろく ②　たから',body:'<b>👛 おさいふ</b>：いま つかえる お金<br><b>🌱 つみたて</b>：じかんと ともに 増えたり 減ったり<br><b>⭐ しあわせ</b>：たのしい ことや 人の ために つかうと ふえる<br><b>🏡 いえ</b>：かうと さいごに かちが のこる<br><br>ゴールで <b>ぜんぶ あわせて いちばん 多い人</b> の かち！<span class="small">（⭐1こ ＝ 2,000円）</span>'},
+  {icon:'💴',title:'じんせい すごろく ③　お金の ながれ',body:'💴マスを とおると…<br>👦 こども：<b>おこづかい</b><br>🧑🧔 おとな：<b>きゅうりょう</b>（やちん・こそだて・ローンが ひかれる）<br>🧓 シニア：<b>ねんきん</b>（せいかつひが ひかれ、たりないと つみたてを とりくずす）<br><span class="small">🎁NISA口座を ひらかないと、さいごに もうけの やく20%が ぜいきんに</span>'},
+  {icon:'🎉',title:'じんせい すごろく ④　ライフイベント',body:'<div class="sg-legend">🎒入学 🧧おとしだま ⚽ぶかつ 🚌旅行 🎓しんろ（かならず とまる）<br>💼しごと（かならず とまる） 🏠ひとりぐらし 🎁NISA 🚗くるま 💒けっこん 👶こども 🏡いえ<br>📈しょうしん 🏫学費 🔄てんしょく 🏥びょうき 👵かいご 🎉ていねん（かならず とまる）<br>✈️旅行 🎨しゅみ 🍼まご 🚑にゅういん 💪けんこう 📸おもいで</div>'},
+  {icon:'🗺️',title:'じんせい すごろく ⑤　マス',body:'<div class="sg-legend">🍀ラッキー ⚡ピンチ 🛍️おかいもの ❓クイズ 🌱つみたて 🕵️あやしい話<br>🚀ちかみち 🌀まいご 😴おやすみ ☂️ほけん 🏪おみせ 💳あとばらい 🤝きふ 📰ニュース 🎂おいわい</div>'},
+  {icon:'⏳',title:'じんせい すごろく ⑥　じかん',body:'みんなが 1回ずつ ふると <b>5年</b> たつよ。<br>5年ごとに 世界の会社の ねだんが かわって、<b>🌱つみたてが 増えたり 減ったり</b>。<br>どこかで <b>大ぼうらく</b> が くるかも…!?'},
 ];
 function sgYearBanner(){
   if(!G) return; sfx('year');
   const d=document.createElement('div'); d.className='sg-ybanner';
-  d.innerHTML=`<div><small>${G.round===1?'すごろく スタート！':'あたらしい 1年'}</small><b>📅 ${G.round}年目</b><small>${G.round===1?'みんな 1回ずつ サイコロを ふろう':`🌱つみたては ${G.lastR>=0?'ふえた':'へった'}（${pct(G.lastR)}）`}</small></div>`;
+  d.innerHTML=`<div><small>${G.round===1?'じんせい すごろく スタート！':'5年 じかんが ながれた…'}</small><b>${G.round===1?'👦 6さいから':`⏳ ラウンド ${G.round}`}</b><small>${G.round===1?'100さいの ゴールを めざそう！':`世界の会社が うごいて 🌱つみたて ${pct(G.lastR)}`}</small></div>`;
   document.body.appendChild(d); setTimeout(()=>d.remove(),2600);
   return sgWait(2300);
 }
@@ -911,11 +1097,11 @@ function sgRender(){
   }
   const lr = G.lastR;
   document.getElementById('sgHead').innerHTML=`
-    <div class="sg-year"><div class="sg-yn">📅 <b>${G.round}</b><small>年目</small></div>
+    <div class="sg-year"><div class="sg-yn">⏳ <b>${G.round}</b><small>ラウンド</small><div class="sg-yy">1ラウンド＝5年</div></div>
       <div class="sg-yw"><div class="sg-yd">${G.players.map((x,i)=>`<span class="${x.done?'fin':i<G.turn?'ok':i===G.turn?'now':''}">${x.ch}<i>${x.done?'🏆':i<G.turn?'✅':i===G.turn?'👉':''}</i></span>`).join('')}</div>
-      <small>みんなが 1回ずつ ふったら 1年 たつよ</small></div>
+      <small>みんなが 1回ずつ ふると 5年 たつよ</small></div>
       <div class="sg-yb"><button class="sg-help" onclick="sgHelp()">❓</button><button class="sg-help" onclick="sgaToggle()">${SGA.on?'🔊':'🔇'}</button></div></div>
-    <div class="sg-mk">${lr==null?'🌏 世界の会社：1年たつと はじめて うごくよ':`🌏 ${G.round-1}年目の 世界の会社：<b class="${lr>=0?'up':'down'}">${pct(lr)}</b>（🌱つみたてが ${lr>=0?'ふえた':'へった'}）`}</div>`;
+    <div class="sg-mk">${lr==null?'🌏 世界の会社：5年たつと はじめて うごくよ':`🌏 この5年の 世界の会社：<b class="${lr>=0?'up':'down'}">${pct(lr)}</b>（🌱つみたてが ${lr>=0?'ふえた':'へった'}）`}</div>`;
   const bd=document.getElementById('sgBoard');
   if(G.g3) G.g3.sync();
   else {
@@ -924,14 +1110,16 @@ function sgRender(){
       const [r,c]=SG_RC(i);
       let ar=''; if(i<BOARD.length-1){ const [r2,c2]=SG_RC(i+1); ar = r2>r ? 'd' : c2>c ? 'r' : 'l'; }
       const toks=G.players.filter(p=>p.pos===i).map(p=>p.ch).join('');
-      return `<div class="sq ${cur.pos===i?'cur':''} ${t==='J'||t==='G'?'stop':''}" style="grid-row:${r+1};grid-column:${c+1};background:${SQ[t].c}">${i&&i<BOARD.length-1?`<i class="no">${i}</i>`:''}<span>${SQ[t].e}</span><small>${SQ[t].n}</small>${ar?`<i class="ar ar${ar}">${{d:'▼',r:'▶',l:'◀'}[ar]}</i>`:''}${toks?`<div class="tk">${toks}</div>`:''}</div>`;
+      const q=sqOf(i), st=STAGES.find(x=>x.from===i);
+      return `<div class="sq ${cur.pos===i?'cur':''} ${t==='J'||t==='G'||t==='X:grad'||t==='X:retire'?'stop':''} ${q.life?'life':''}" style="grid-row:${r+1};grid-column:${c+1};background:${q.c}">${st?`<i class="stg" style="background:${st.c}">${st.e}${st.n}</i>`:''}${i&&i<BOARD.length-1?`<i class="no">${i}</i>`:''}<span>${q.e}</span><small>${q.n}</small>${ar?`<i class="ar ar${ar}">${{d:'▼',r:'▶',l:'◀'}[ar]}</i>`:''}${toks?`<div class="tk">${toks}</div>`:''}</div>`;
     }).join('');
   }
   document.getElementById('sgCards').innerHTML=G.players.map((p,i)=>`
     <div class="pc ${i===G.turn&&!p.done?'on':''} ${p.done?'done':''}">
-      <b>${p.ch} ${esc(p.name)}</b> ${p.job?`<span class="small">${p.job.e}${p.job.n}</span>`:''}${p.done?' 🏆ゴール':''}<br>
+      <b>${p.ch} ${esc(p.name)}</b> <span class="pc-age" style="background:${stageOf(p.pos).c}">${stageOf(p.pos).e} ${ageAt(p.pos)}さい</span>${p.done?' 🎂':''}<br>
+      ${p.job?`<span class="small">${p.retired?'🎉 ねんきん生活（もと':''}${p.job.e}${p.job.n}${p.retired?'）':''}</span><br>`:''}
       <span class="pl">👛 おさいふ</span> ${money(p.cash)}<br><span class="pl">🌱 つみたて</span> ${yen(p.nisa)}<br><span class="pl">⭐ たのしさ</span> ${p.fun}
-      ${(p.ins||p.skill||p.loan||p.skip)?`<div class="pc-tags">${p.ins?`<span>☂️×${p.ins}</span>`:''}${p.skill?`<span>🎓×${p.skill}</span>`:''}${p.loan?`<span>💳 −${yen(p.loan)}</span>`:''}${p.skip?'<span>😴 おやすみ</span>':''}</div>`:''}
+      ${(()=>{ const tg=[p.nisaAcct&&'🎁NISA',p.partner&&'💒',p.kids&&'👶'.repeat(p.kids),p.ownHouse&&(p.houseLoan?`🏡ローン ${yen(p.houseLoan)}`:'🏡もちいえ'),(!p.ownHouse&&p.rent)&&`🏠やちん ${yen(p.rent)}`,p.car&&'🚗',p.ins&&`☂️×${p.ins}`,p.skill&&`🎓×${p.skill}`,p.loan&&`💳 −${yen(p.loan)}`,p.skip&&'😴 おやすみ'].filter(Boolean); return tg.length?`<div class="pc-tags">${tg.map(x=>`<span>${x}</span>`).join('')}</div>`:''; })()}
     </div>`).join('');
   document.getElementById('sgLog').innerHTML=`📝 ${G.log}`;
   const left = BOARD.length-1-cur.pos;
@@ -1027,11 +1215,11 @@ function makeSg3D(el){
   renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
   renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
   el.appendChild(renderer.domElement);
-  const scene=new T.Scene(); scene.background=new T.Color('#9bd7ff'); scene.fog=new T.Fog('#9bd7ff',20,46);
+  const scene=new T.Scene(); scene.background=new T.Color('#9bd7ff'); scene.fog=new T.Fog('#9bd7ff',22,52);
   const cam=new T.PerspectiveCamera(45,1,.1,120);
   scene.add(new T.HemisphereLight('#ffffff','#5b8c2a',.75));
   const sun=new T.DirectionalLight('#fff3d6',1.2); sun.position.set(-8,16,10); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
-  Object.assign(sun.shadow.camera,{left:-14,right:14,top:14,bottom:-14,near:1,far:60}); sun.shadow.bias=-.002; scene.add(sun);
+  Object.assign(sun.shadow.camera,{left:-17,right:17,top:17,bottom:-17,near:1,far:70}); sun.shadow.bias=-.002; scene.add(sun);
   const lam=(c,o={})=>new T.MeshLambertMaterial({color:c,...o});
   const flat=(c)=>new T.MeshLambertMaterial({color:c,flatShading:true});
   const add=(m,sh=true)=>{ m.castShadow=sh; m.receiveShadow=true; scene.add(m); return m; };
@@ -1041,11 +1229,12 @@ function makeSg3D(el){
     const tx=new T.CanvasTexture(cv); tx.colorSpace=T.SRGBColorSpace; const sp=new T.Sprite(new T.SpriteMaterial({map:tx})); sp.scale.set(s,s,s); return sp; };
 
   // --- ぼうけんの みち（くねくね コース）---
-  const ctrl=[[-7,7],[-3.5,7.4],[0,6],[3.5,7],[7,5.2],[6.2,2],[2.8,2.6],[-.5,1.6],[-4,2.6],[-7.2,.6],[-6,-2.6],[-2.6,-2],[.8,-3.2],[4.2,-1.8],[7.4,-3.6],[6,-7],[2.4,-6.6],[-1.2,-7.6],[-4.6,-7]];
+  const ctrl=[]; [10,5.5,1,-3.5,-8].forEach((z,k)=>{ const xs=[-10,-5,0,5,10]; (k%2?xs.reverse():xs).forEach((x,m)=>ctrl.push([x,z+(m%2?.6:-.6)*(k===0&&m===0?0:1)])); });
   const curve=new T.CatmullRomCurve3(ctrl.map(([x,z])=>new T.Vector3(x,0,z)),false,'catmullrom',.5);
   const PTS=curve.getSpacedPoints(BOARD.length-1);
   const tp=i=>PTS[i].clone();
-  const near=(x,z,d)=>PTS.some(p=>Math.hypot(p.x-x,p.z-z)<d) || Math.hypot(x+7,z-7)<2.6 || Math.hypot(x+6.5,z+9)<3.2;
+  const S0=PTS[0], SE=PTS[PTS.length-1];
+  const near=(x,z,d)=>PTS.some(p=>Math.hypot(p.x-x,p.z-z)<d) || Math.hypot(x-(S0.x-2),z-(S0.z+1.5))<3 || Math.hypot(x-(SE.x+1.6),z-(SE.z-2.6))<3.4;
 
   // 地面（草原＋土の道）
   const ground=add(new T.Mesh(new T.PlaneGeometry(120,120),lam('#7ccf5a')),false); ground.rotation.x=-Math.PI/2;
@@ -1055,7 +1244,7 @@ function makeSg3D(el){
   for(let k=0;k<26;k++){ const x=(Math.random()-.5)*36, z=(Math.random()-.5)*36; if(near(x,z,1.6)) continue;
     const m=new T.Mesh(new T.CircleGeometry(1+Math.random()*2,10),lam(['#6cc04a','#8fd968','#5fb33f'][k%3])); m.rotation.x=-Math.PI/2; m.position.set(x,.005,z); m.receiveShadow=true; scene.add(m); }
   // 川と はし
-  const riverZ=4.2;
+  const riverZ=3.25;
   const river=new T.Mesh(new T.PlaneGeometry(60,1.6),new T.MeshPhongMaterial({color:'#38bdf8',shininess:90,transparent:true,opacity:.92})); river.rotation.x=-Math.PI/2; river.position.set(0,.02,riverZ); river.receiveShadow=true; scene.add(river);
   for(let i=0;i<PTS.length-1;i++){ const a=PTS[i], b=PTS[i+1];
     if((a.z-riverZ)*(b.z-riverZ)<=0){ const t=(riverZ-a.z)/(b.z-a.z||1e-6), x=a.x+(b.x-a.x)*t;
@@ -1063,12 +1252,12 @@ function makeSg3D(el){
       [-.7,.7].forEach(dx=>{ const r=new T.Mesh(new T.BoxGeometry(.08,.3,2.2),lam('#78350f')); r.position.set(dx,.3,0); r.castShadow=true; br.add(r); });
       br.position.set(x,0,riverZ); br.rotation.y=Math.atan2(b.x-a.x,b.z-a.z); scene.add(br); } }
   // 池
-  const pond=new T.Mesh(new T.CircleGeometry(1.6,20),new T.MeshPhongMaterial({color:'#60a5fa',shininess:80})); pond.rotation.x=-Math.PI/2; pond.position.set(1.6,.02,-.6); scene.add(pond);
+  const pond=new T.Mesh(new T.CircleGeometry(1.1,20),new T.MeshPhongMaterial({color:'#60a5fa',shininess:80})); pond.rotation.x=-Math.PI/2; pond.position.set(2.5,.02,-1.25); scene.add(pond);
   // 木・森
   const tree=(x,z,s=1)=>{ const g=new T.Group(); const tr=new T.Mesh(new T.CylinderGeometry(.09,.14,.55,6),lam('#8b5a2b')); tr.position.y=.27; tr.castShadow=true; g.add(tr);
     const kind=Math.random(); const lf=new T.Mesh(kind<.55?new T.ConeGeometry(.55,1.2,7):new T.IcosahedronGeometry(.6,0),flat(['#15803d','#16a34a','#22c55e','#166534'][Math.floor(Math.random()*4)]));
     lf.position.y=kind<.55?1.05:1.0; lf.castShadow=true; g.add(lf); g.position.set(x,0,z); g.scale.setScalar(s); scene.add(g); };
-  for(let k=0;k<140;k++){ const x=(Math.random()-.5)*34, z=(Math.random()-.5)*34; if(near(x,z,1.5)||Math.abs(z-riverZ)<1.2||Math.hypot(x-1.6,z+.6)<2) continue; tree(x,z,.7+Math.random()*.7); }
+  for(let k=0;k<140;k++){ const x=(Math.random()-.5)*34, z=(Math.random()-.5)*34; if(near(x,z,1.5)||Math.abs(z-riverZ)<1.2||Math.hypot(x-2.5,z+1.25)<1.6) continue; tree(x,z,.7+Math.random()*.7); }
   // 山（まわり）
   for(let k=0;k<16;k++){ const a=k/16*Math.PI*2, r=19+Math.random()*4, h=4+Math.random()*4;
     const m=add(new T.Mesh(new T.ConeGeometry(3+Math.random()*2,h,6),flat(k%2?'#64748b':'#4d7c0f')),false); m.position.set(Math.cos(a)*r,h/2,Math.sin(a)*r);
@@ -1082,7 +1271,7 @@ function makeSg3D(el){
     const r=new T.Mesh(new T.ConeGeometry(.85,.6,4),flat(c)); r.position.y=1.1; r.rotation.y=Math.PI/4; r.castShadow=true; g.add(r);
     const d=new T.Mesh(new T.BoxGeometry(.25,.4,.02),lam('#92400e')); d.position.set(0,.2,.46); g.add(d);
     g.position.set(x,0,z); g.rotation.y=rot; scene.add(g); };
-  house(-8.6,8.6,'#ef4444',.3); house(-6.6,9.2,'#3b82f6',-.2); house(-9.2,6.4,'#f59e0b',.8);
+  house(S0.x-2.2,S0.z+2.4,'#ef4444',.3); house(S0.x-.2,S0.z+2.8,'#3b82f6',-.2); house(S0.x-3.2,S0.z+.2,'#f59e0b',.8);
   // ゴールの おしろ
   const castle=new T.Group(); const wall=lam('#e5e7eb'), roof=flat('#2563eb');
   const keep=new T.Mesh(new T.BoxGeometry(2.4,1.8,1.8),wall); keep.position.y=.9; castle.add(keep);
@@ -1092,16 +1281,17 @@ function makeSg3D(el){
   const tr=new T.Mesh(new T.ConeGeometry(.75,1.2,10),flat('#dc2626')); tr.position.y=3.7; castle.add(tr);
   const gate=new T.Mesh(new T.BoxGeometry(.7,.9,.05),lam('#78350f')); gate.position.set(0,.45,.92); castle.add(gate);
   castle.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
-  const gl=PTS[PTS.length-1]; castle.position.set(gl.x-1.4,0,gl.z-2.2); castle.rotation.y=.35; scene.add(castle);
+  const gl=PTS[PTS.length-1]; castle.position.set(gl.x+1.6,0,gl.z-2.6); castle.rotation.y=-.3; scene.add(castle);
   const flagS=emojiSprite('🚩',.8); flagS.position.set(castle.position.x,4.9,castle.position.z); scene.add(flagS);
 
   // --- マス（石の ステップ）---
   const tileTex=(i,t)=>{ const cv=document.createElement('canvas'); cv.width=cv.height=256; const x=cv.getContext('2d');
     x.fillStyle='#e7e2d6'; x.fillRect(0,0,256,256);
-    x.fillStyle=SQ[t].c; x.beginPath(); x.arc(128,128,112,0,Math.PI*2); x.fill();
-    const stop=t==='J'||t==='G'; x.lineWidth=stop?14:6; x.strokeStyle=stop?'#fb923c':'rgba(0,0,0,.15)'; x.stroke();
-    x.textAlign='center'; x.textBaseline='middle'; x.font=emojiFont(96); x.fillText(SQ[t].e,128,112);
-    x.fillStyle='#1f2937'; x.font='bold 30px "Zen Maru Gothic","Hiragino Maru Gothic Pro",sans-serif'; x.fillText(SQ[t].n,128,192);
+    const q=sqOf(i);
+    x.fillStyle=q.c; x.beginPath(); x.arc(128,128,112,0,Math.PI*2); x.fill();
+    const stop=t==='J'||t==='G'||t==='X:grad'||t==='X:retire'||q.life; x.lineWidth=stop?14:6; x.strokeStyle=stop?'#fb923c':'rgba(0,0,0,.15)'; x.stroke();
+    x.textAlign='center'; x.textBaseline='middle'; x.font=emojiFont(96); x.fillText(q.e,128,112);
+    x.fillStyle='#1f2937'; x.font='bold 30px "Zen Maru Gothic","Hiragino Maru Gothic Pro",sans-serif'; x.font=(q.n.length>6?'bold 24px ':'bold 30px ')+'"Zen Maru Gothic","Hiragino Maru Gothic Pro",sans-serif'; x.fillText(q.n,128,192);
     if(i>0&&i<BOARD.length-1){ x.fillStyle='#fff'; x.beginPath(); x.arc(128,40,24,0,Math.PI*2); x.fill(); x.fillStyle='#475569'; x.font='bold 30px sans-serif'; x.fillText(String(i),128,42); }
     const tx=new T.CanvasTexture(cv); tx.colorSpace=T.SRGBColorSpace; tx.anisotropy=4; tx.center.set(.5,.5); return tx; };
   const tileH=[];
@@ -1134,6 +1324,20 @@ function makeSg3D(el){
     if(t==='L'){ const c=chest(); c.position.copy(p.clone().add(side.clone().multiplyScalar(.95))); c.rotation.y=Math.atan2(-side.x,-side.z); scene.add(c); }
     if(t==='J'){ const s=sign('しごと'); s.position.copy(p.clone().add(side.clone().multiplyScalar(-1))); s.rotation.y=0; scene.add(s); }
   });
+  STAGES.slice(1).forEach(st=>{ const pp=tp(st.from), n=tp(st.from+1), d=n.clone().sub(pp), side=new T.Vector3(d.z,0,-d.x).normalize();
+    const zs=sign(st.e+st.n); zs.scale.setScalar(1.3); zs.position.copy(pp.clone().add(side.multiplyScalar(-1.3))); scene.add(zs); });
+  // がっこう（こどもゾーン）
+  { const sp=tp(5), g=new T.Group(); const b=new T.Mesh(new T.BoxGeometry(2.4,1.1,1),lam('#fde68a')); b.position.y=.55; g.add(b);
+    const tw=new T.Mesh(new T.BoxGeometry(.6,1.8,.6),lam('#fef3c7')); tw.position.y=.9; g.add(tw);
+    const ck=new T.Mesh(new T.CylinderGeometry(.22,.22,.05,16),lam('#ffffff')); ck.rotation.x=Math.PI/2; ck.position.set(0,1.45,.31); g.add(ck);
+    g.traverse(o=>{ if(o.isMesh){o.castShadow=true;o.receiveShadow=true;} }); g.position.set(sp.x,0,sp.z+2.2); scene.add(g); }
+  // まち（わかもの・おとなゾーン）
+  [20,26,32,40,46].forEach((ti,k)=>{ const sp=tp(ti); const h=1.2+Math.random()*1.8; const bd=add(new T.Mesh(new T.BoxGeometry(.9,h,.9),lam(['#cbd5e1','#bfdbfe','#e2e8f0','#fecaca','#d9f99d'][k])));
+    bd.position.set(sp.x+(k%2?1.6:-1.6),h/2,sp.z+(k%2?1.8:-1.8)); });
+  // こうえん（シニアゾーン）
+  [57,63].forEach(ti=>{ const sp=tp(ti); const g=new T.Group(); const roof=new T.Mesh(new T.ConeGeometry(.9,.5,6),flat('#b91c1c')); roof.position.y=1.15; g.add(roof);
+    [[.5,.5],[-.5,.5],[.5,-.5],[-.5,-.5]].forEach(([x,z])=>{ const pl=new T.Mesh(new T.CylinderGeometry(.05,.05,.9,6),lam('#78350f')); pl.position.set(x,.45,z); g.add(pl); });
+    g.traverse(o=>{ if(o.isMesh) o.castShadow=true; }); g.position.set(sp.x,0,sp.z-2); scene.add(g); });
   const startSign=sign('スタート'); startSign.position.copy(tp(0).add(new T.Vector3(-1.1,0,.6))); scene.add(startSign);
   const top=i=>tp(i).setY(tileH[i]);
 
@@ -1249,18 +1453,6 @@ function payCost(p, amt){
   return note;
 }
 
-function payday(p){
-  const j=p.job;
-  let pay = !j ? 1000 : j.pay!=null ? j.pay : Math.round((j.min+Math.random()*(j.max-j.min))/500)*500;
-  pay += p.skill*(j?1000:200);
-  p.cash += pay; sfx('coin');
-  let lp=0; if(p.loan>0){ lp=Math.min(p.loan,p.loanPay); p.loan-=lp; p.cash-=lp; }
-  if(j && j.fun) p.fun += j.fun;
-  let t=0;
-  if(p.tsumi>0 && p.cash>0){ t=Math.min(p.tsumi,p.cash); p.cash-=t; p.nisa+=t; p.nisaIn+=t; }
-  fly(`💴 ${j?'きゅうりょう':'おこづかい'} +${yen(pay)}${t?`<br><small>🌱 つみたてへ ${yen(t)}</small>`:''}${lp?`<br><small>💳 あとばらい −${yen(lp)}</small>`:''}`);
-  G.log = `${p.ch} ${j?'きゅうりょう':'おこづかい'} ${yen(pay)}${t?`（うち ${yen(t)} は じどうで つみたて）`:''}`;
-}
 
 async function sgTurn(p, id){
   sgRender();
@@ -1312,16 +1504,18 @@ async function sgWalk(p,id,n,back=false){
     if(t==='P' && !back){ payday(p); sgRender(); await sgWait(1500); }
     else await sgWait(120);
     if(!sgAlive(id)) return;
-    if(!back && ((t==='J'&&!p.job) || t==='G')) break;
+    if(!back && isStopTile(p,p.pos)) break;
   }
 }
 async function sgLand(p, id, warped=false){
   const t=BOARD[p.pos], s=sc(p);
   if(t==='P' || t==='S'){ await sgWait(600); return; }
-  G.log=`${p.ch} ${p.pos}ばんの ${SQ[t].e}${SQ[t].n}マスに とまった！`; sgRender();
-  fly(`${SQ[t].e} ${SQ[t].n}マス！`); sfx(t==='L'?'good':t==='B'?'bad':t==='G'?'goal':'stop');
+  const q=sqOf(p.pos);
+  G.log=`${p.ch} ${ageAt(p.pos)}さい：${q.e}${q.n}${q.life?'':'マス'}！`; sgRender();
+  fly(`${q.e} ${q.n}${q.life?'':'マス'}！ <small>（${ageAt(p.pos)}さい）</small>`); sfx(t==='L'?'good':t==='B'?'bad':t==='G'?'goal':'stop');
   await sgWait(1300); if(!sgAlive(id)) return;
-  if(t==='L'){
+  if(t.startsWith('X:')){ await sgLife(p,id,t.slice(2)); }
+  else if(t==='L'){
     const c=pick(LUCKY), a=c.a*s; p.cash+=a; if(c.f) p.fun+=c.f;
     await sgAsk(p,{icon:c.e,title:'🍀 ラッキー！',body:`${c.t}<br><b class="up">+${yen(a)}</b>${c.f?` ⭐+${c.f}`:''}`});
   }
@@ -1388,7 +1582,7 @@ async function sgLand(p, id, warped=false){
     const i=await sgAsk(p,{icon:'💼',title:'しごとを えらぼう！',body:'これからは 💴マスで きゅうりょうが もらえるよ。<br><span class="small">ここから先は お金の 出入りが 3ばいに なるよ</span>',
       choices:opts.map(j=>`${j.e} ${j.n}<br><span class="small" style="font-weight:400">${j.d}</span>`), cpuPick:Math.floor(Math.random()*3)});
     if(!sgAlive(id)) return;
-    const j=opts[i]; p.job=j;
+    const j=opts[i]; p.job=j; lifeLog(p,`${j.n}に なった ${j.e}`);
     let note=''; if(j.cost) note=payCost(p,j.cost);
     const k=await sgAsk(p,{icon:j.e,title:`${j.n} に なった！`,
       body:`${j.cost?`学費 ${yen(j.cost)} を はらった${note}<br>`:''}きゅうりょうから 毎回 いくら じどうで つみたてる？`,
@@ -1399,7 +1593,7 @@ async function sgLand(p, id, warped=false){
   }
   else if(t==='W' || t==='R'){
     const fw=t==='W';
-    await sgAsk(p,{icon:SQ[t].e,title:fw?'🚀 ちかみち 発見！':'🌀 まいごに なっちゃった…',body:fw?'<b>2マス すすむ</b> よ！':'<b>2マス もどる</b> よ…'});
+    await sgAsk(p,{icon:sqOf(p.pos).e,title:fw?'🚀 ちかみち 発見！':'🌀 まいごに なっちゃった…',body:fw?'<b>2マス すすむ</b> よ！':'<b>2マス もどる</b> よ…'});
     if(!sgAlive(id)) return;
     await sgWalk(p,id,2,!fw); if(!sgAlive(id)) return;
     if(!warped && !['W','R'].includes(BOARD[p.pos])) return sgLand(p,id,true);
@@ -1467,7 +1661,8 @@ async function sgLand(p, id, warped=false){
     G.finish++; p.done=true; p.place=G.finish;
     p.bonus=[10000,5000,2000,0][Math.min(G.finish-1,3)];
     p.cash+=p.bonus;
-    await sgAsk(p,{icon:'🏆',title:`${G.finish}ばんめに ゴール！`,body:`ゴールボーナス <b class="up">+${yen(p.bonus)}</b><br>つみたては このあとも ほかの人が ゴールするまで うごきつづけるよ`});
+    lifeLog(p,'100さいの おいわい 🎂');
+    await sgAsk(p,{icon:'🎂',title:`100さい おめでとう！（${G.finish}ばんめ）`,body:`ながい じんせい、おつかれさま！<br>ゴールボーナス <b class="up">+${yen(p.bonus)}</b><br><span class="small">つみたては ほかの人が ゴールするまで うごきつづけるよ</span>`});
   }
   sgRender();
 }
@@ -1482,7 +1677,7 @@ async function sgYearEnd(id){
   const news = crash ? '📰 大ニュース！ 世界中で 株が 大きく 下がった！'
     : r>=0.12 ? '📰 世界の 会社が 大かつやく！' : r>=0 ? '📰 世界の 会社は まあまあ 元気' : '📰 ちょっと けいきが わるい 年…';
   sgRender();
-  await sgAsk(null,{icon:r>=0?'📈':'📉',title:`📅 ${G.round}年目 おわり！`,
+  await sgAsk(null,{icon:r>=0?'📈':'📉',title:`⏳ 5年 たった！（ラウンド ${G.round}）`,
     body:`${news}<div class="market ${r>=0?'up':'down'}">${pct(r)}</div><div class="small">みんなの つみたての うごき</div><table class="ptable">${rows}</table>${debt}`,
     lesson: G.round===1 ? '1年ごとに 世界の会社の ねだんが かわって、<b>つみたての お金も いっしょに 増えたり 減ったり</b> するよ。'
       : debt && !G.debtTold ? (G.debtTold=true,'しゃっきんには <b>りそく</b> が つく。かえさないと どんどん 大きく なるよ！') : '',
@@ -1504,47 +1699,48 @@ async function sgYearEnd(id){
   }
   G.round++;
   sgRender();
-  await sgYearBanner();
+  if(!G.players.every(x=>x.done)) await sgYearBanner();
 }
 
 function sgEnd(){
   sgaBgm(false); setTimeout(()=>sfx('goal'),200);
-  const ps=[...G.players].map(p=>({...p,total:p.cash+p.nisa+p.fun*STAR_VALUE})).sort((a,b)=>b.total-a.total);
+  const ps=[...G.players].map(p=>({...p,...lifeScore(p)})).sort((a,b)=>b.total-a.total);
   const medal=['🥇','🥈','🥉','🎖️','🎖️'];
   confetti();
   setHome(true);
   $app.innerHTML = `
   <div class="card center">
-    <div style="font-size:56px">🏆</div>
-    <div style="font-weight:700;font-size:20px;margin:4px 0">けっか はっぴょう！</div>
-    <div class="small">${G.round-1}年間 の 人生すごろく。　点数 ＝ おさいふ ＋ つみたて ＋ ⭐×${STAR_VALUE.toLocaleString()}円</div>
+    <div style="font-size:56px">🎂</div>
+    <div style="font-weight:700;font-size:20px;margin:4px 0">じんせい ふりかえり</div>
+    <div class="small">6さいから 100さいまでの じんせいすごろく（${G.round-1}ラウンド）<br>点数 ＝ おさいふ ＋ つみたて（ぜいきん後）＋ いえ ＋ ⭐×${STAR_VALUE.toLocaleString()}円</div>
   </div>
   <div class="card">${ps.map((p,i)=>{
     const gain=p.nisa-p.nisaIn; const notes=[];
-    if(p.nisaIn>0) notes.push(gain>=0?`🌱 つみたてが <b class="up">${yen(gain)}</b> ふえた！`:`🌱 つみたては ${yen(-gain)} へった…`);
-    if(p.held) notes.push('🧘 暴落でも もちつづけた');
-    if(p.sold) notes.push('💨 暴落で うってしまった');
+    if(p.nisaIn>0||p.nisa>0) notes.push(gain>=0?`🌱 つみたてが <b class="up">${yen(gain)}</b> ふえた！`:`🌱 つみたては ${yen(-gain)} へった…`);
+    if(p.tax) notes.push(`🧾 NISA口座が なかったので ぜいきん <b class="down">−${yen(p.tax)}</b>`); else if(p.nisaAcct && gain>0) notes.push('🎁 NISAで ぜいきん 0円！');
+    if(p.withdrawn) notes.push(`🧓 ろうごに つみたてを ${yen(p.withdrawn)} とりくずして くらした`);
+    if(p.held) notes.push('🧘 ぼうらくでも もちつづけた');
+    if(p.sold) notes.push('💨 ぼうらくで うってしまった');
     if(p.scammed) notes.push('💸 サギに ひっかかった');
-    if(p.refused) notes.push(`🛡️ あやしい話を ${p.refused}かい ことわった`);
     if(p.debtInt) notes.push(`😱 しゃっきんの りそくを ${yen(p.debtInt)} はらった`);
-    if(p.quizOk) notes.push(`❓ クイズ ${p.quizOk}もん せいかい`);
     return `<div class="rank"><div class="m">${medal[i]}</div><div style="flex:1">
       <div><b>${p.ch} ${esc(p.name)}</b> ${p.job?`<span class="small">${p.job.e}${p.job.n}</span>`:''}</div>
       <div class="tot">${yen(p.total)}</div>
-      <div class="small">👛 ${p.cash<0?'しゃっきん '+yen(-p.cash):yen(p.cash)}　🌱 ${yen(p.nisa)}　⭐ ${p.fun}（${yen(p.fun*STAR_VALUE)}）</div>
-      <div class="p-text" style="font-size:12px;margin-top:4px">${notes.join('<br>')}</div></div></div>`;
+      <div class="small">👛 ${p.cash<0?'しゃっきん '+yen(-p.cash):yen(p.cash)}　🌱 ${yen(p.nisa-p.tax)}${p.house?`　🏡 ${yen(p.house)}`:''}　⭐ ${p.fun}</div>
+      <div class="p-text" style="font-size:12px;margin-top:4px">${notes.join('<br>')}</div>
+      <details class="sg-lifelog"><summary>📖 じんせいの きろく（${p.life.length}）</summary><div>${p.life.map(x=>`<div>・${x}</div>`).join('')}</div></details></div></div>`;
   }).join('')}</div>
   <div class="card p-text">
-    <b>すごろくで わかったこと</b>
+    <b>じんせいすごろくで わかったこと</b>
     <ul style="margin-top:6px">
-      <li>きゅうりょうから <b>さきに じどうで つみたて</b> すると、しぜんに たまる</li>
-      <li>ピンチは とつぜん くる。<b>よびの お金</b> を のこしておこう</li>
-      <li>投資は 下がる 年も ある。<b>あわてて うらない</b></li>
-      <li>しゃっきんには りそくが つく。<b>かえすのが たいへん</b></li>
-      <li>「ぜったい もうかる」は <b>サギ</b> の サイン</li>
-      <li>お金を ためるだけじゃなく、<b>たのしく つかう⭐</b> のも 大切</li>
+      <li><b>こどもの ころから</b> つみたてると、長い じかんで 大きく そだつ（ふくり）</li>
+      <li>おとなに なると やちん・こそだて・ローン など <b>まいつきの しはらい</b> が ふえる</li>
+      <li>ろうごは ねんきんだけでは たりない ことも。<b>わかい ころの つみたて</b> が たすけに なる</li>
+      <li><b>NISA</b> なら ふえた お金に ぜいきんが かからない</li>
+      <li>ほけん・よびの お金で ピンチに そなえる。ぼうらくでも <b>あわてて うらない</b></li>
+      <li>お金は ためるだけ じゃなく、<b>たのしい じかんや 人の ため</b> にも つかおう ⭐</li>
     </ul>
-    <div class="lesson">💬 おうちの人と：「どの マスが いちばん ドキドキした？」「つぎは どう する？」</div>
+    <div class="lesson">💬 おうちの人と：「どの ライフイベントが 心に のこった？」「ほんとうの じんせいでは どう したい？」</div>
   </div>
   <button class="btn pink" onclick="sgSetup()">🔁 もう1回 あそぶ</button>
   <button class="btn gray" onclick="goHome()">🏠 メニューへ</button>`;
